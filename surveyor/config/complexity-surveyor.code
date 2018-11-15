@@ -1,0 +1,198 @@
+#=============================================================================
+#   Surveyor 5 Config File for per-Routine Complexity
+#   Mike Kelly Consulting LLC
+#
+#
+#   Different sub-branches of the tree can be configured separetly by placing
+#   config files in them with the same name.
+#
+#
+#=============================================================================
+# Copyright 2008-2012, Matt Peloquin. This file is part of Code Surveyor,
+# covered under GNU GPL v3 and is distributed WITHOUT ANY WARRANTY.
+#=============================================================================
+
+#-------------------------------------------------------------------------
+#  Per-Routine Complexity Metrics
+#  Using the routines verb, metrics can be collected for routines in a
+#  file based on using RE expressions to detect starts of routines
+#  Depending on your language and coding style, this approach can provide
+#  very close per-routine metrics
+#
+#  A brief Python reg-ex cheat sheet:
+#
+#	.  *  +	Mean the normal RE things
+#	\w	matches any alphanumeric character and the underscore;
+#			this is equivalent to the set [a-zA-Z0-9_].
+#	\s	matches any whitespace character;
+#			 this is equivalent to the set [ \t\n\r\f\v].
+#	(?:x|y)	Matches x or y
+#	(?!x|y)	Matches if "x" or "y" doesn’t match next.
+#			This is a negative lookahead assertion.
+#		For example, Isaac (?!Asimov) will match 'Isaac '
+#			only if it’s NOT followed by 'Asimov'.
+#	[\w<>]	Any alphanumeric character plus "<" and ">"
+#			(e.g. for templates in C++)
+#	?	The '*', '+', and '?' qualifiers are all greedy;
+#			they match as much text as possible.
+#		Sometimes this behaviour isn’t desired; if the RE <.*>
+#		is matched against '<H1>title</H1>', it will match the
+#		entire string, and not just '<H1>'.
+#		Adding '?' after the qualifier makes it perform the match
+#		in non-greedy or minimal fashion; as few characters as
+#		possible will be matched.
+#		Using .*? in the previous expression will match only '<H1>'.
+#
+# And here's a handy tool that lets you tune the RE:
+#	http://www.pythonregex.com/
+# Characters allowed within formal parameters in function definitions, e.g.
+# you could have a formal parameter that is Node<String> xxxx
+#
+CONSTANT:_CHARS_:\.\[\]\&\*<>:
+
+# C#
+# Captures most C# methods without false positives
+routines  Code  routine.*   *.cs     OUT:Complexity.csv
+    ^.*? (?:public|private|protected|static|internal) (?!\s+class|\s+struct|\s+sealed) ([\w\s_CHARS_]+)\s*\(
+    ^.*?void ([\w\s_CHARS_]+)\s*[\(\n]
+routines_end
+
+# PosgreSQL
+routines  Code  routine.*   *.sql   OUT:Complexity.csv \
+OPT:DECISIONS:(\b(IF|ELSE|ELSIF|FOR|WHILE|DO|LOOP|FOREACH)\b)
+    \s*CREATE\s+FUNCTION\s+(.*)
+    \s*CREATE\s+OR\s+REPLACE\S+FUNCTION\s+(.*)
+routines_end
+
+# Ruby
+routines  Code  routine.*   *.rb   OUT:Complexity.csv OPT:RUBY \
+OPT:DECISIONS:(\b(if|else|elsif|for|while|do|rescue|unless)\b)
+    \s*def\s+(\w+)
+routines_end
+
+# PHP
+routines  Code  routine.*   *.php   OUT:Complexity.csv
+    \s*(?:public|private)\s+function\s+(\w+)
+    \s*<?php
+routines_end
+
+# Python
+routines  Code  routine.*   *.py   OUT:Complexity.csv  OPT:PYTHON
+    \s*def\s+(\w+)
+routines_end
+
+# Java
+# Capture most Java methods without false positives
+# Note that in this example we are overriding the Code.py default decision detection
+routines  Code  routine.*   *.java  OUT:Complexity.csv  \
+OPT:DECISIONS:(\b(if|else|for|while)\b)
+    ^.*?\s(?:public|private|protected|static|void|function)\s([\w\s_CHARS_]+)\s*\(
+routines_end
+
+# JavaScript and derivatives
+# Note that in this example we are overriding the Code.py default decision detection
+# This handles both function vars and bare functions
+# and functions like xxx.add = function(value)
+routines  Code  routine.*   *.js;*.ts  OUT:Complexity.csv  \
+OPT:DECISIONS:(\b(if|else|for|while|case)\b)
+    ^.*?var\s+([\w\._]+)\s*=\s*function\s*\(
+    ^\s*([\w\._]+)\s*=\s*function\s*\(
+    ^.*?var\s+([\w\._]+)\s*=\s*new\s*Function\s*\(
+    \s*function\s*(\w+)\s*\(
+    \s*(?:public|private|protected|static|function)\s+([\w\s_CHARS_]+)\s*\(
+routines_end
+
+# CoffeeScript
+# different syntax - uses -> or => for defining functions
+routines  Code  routine.*   *.coffee  OUT:Complexity.csv  \
+OPT:DECISIONS:(\b(if|else|for|while|when)\b)
+    ^\s*([\w\._]+)\s*=\s*\(.*\)\s*[=-]>
+    ^\s*([\w\._]+)\s*=\s*[=-]>
+# Class methods
+    ^\s*([\w\._]+)\s*:\s*[=-]>
+    ^\s*([\w\._]+)\s*:\s*\(.*\)\s*[=-]>
+routines_end
+
+# Capture Objective-C methods
+routines  Code  routine.*   *.m;*.mm  OUT:Complexity.csv
+    ^\s*[-+]\s*\(\w+\)\s*([\w\s_CHARS_]+)
+routines_end
+
+# Capture C/C++ methods
+routines  Code  routine.*       *.cpp;*.cc;*.c;*.cxx    cpp        OUT:Complexity.csv  \
+OPT:DECISIONS:(\b(if|else|for|while|do|case)\b)
+  # Constructor and Destructors
+  ^\s*(\w+::[~\w]+)\s*\([^;]*$
+
+  # Standard idiom used by Greenwich, e.g.
+  ^\s*(?:bool|BOOL|INT|void|int)\w+::\w+$
+
+  # C++ method declaration with some modifiers on same lines as name
+  # Note the additional characters to capture templates and operators
+  ^[^=#]*?([\w<>]+\s+[\w<>]+::[\w<>:]+)\s*\([^;]*$
+
+  # C++ method declaration with modifiers on lines above name
+  ^\s*([\w<>]+::[\w<>:]+)\s*\([^;]*$
+
+  # C-style method definitions, using standard macros
+  ^STDMETHODIMP [^-=+|#]*?([\w<>]+\s+(?!if|for|switch|while|catch|return)\w+)\s*\([^-;=+|]*$
+
+  # C-style method definitions, without false positives of logic
+  ^[^-=+|#"]*?([\w<>]+\s+(?!if|for|switch|while|catch|return|_T)\w+)\s*\([^-;=+|]*$
+
+  # C-style methods with modifiers on the line above
+  # Modified for Stockholm coding convention that the routine is always
+  # left-justified which eliminates some false positives.
+  ^((?!if|for|switch|while|catch|return|OFFSETOF|sizeof|WIREFIELD|_T)[\w<>]+)\s*\([^-;=+|&]*$
+routines_end
+
+# VB
+routines  Code  routine.*   *.vb   OUT:Complexity.csv \
+OPT:DECISIONS:(\b(If|Else|Elseif|For|While|Do|Select|Case)\b)
+
+  # method with params
+  ^[^-=+|#"]*?\s*(?:Sub|Function|Property|Event) \s+([\w]+)\(
+
+  # method without params
+  ^[^-=+|#"]*?\s*(?:Sub|Function|Property|Event) \s+([\w]+)\s*
+routines_end
+
+# Go
+routines  Code  routine.*   *.go   OUT:Complexity.csv \
+OPT:DECISIONS:(\b(if|else|for|case)\b)
+  # In go, functions are basically
+  # func name(parameter-list) (result-list) {
+  ^\s*func\s+([\w]+)\(
+  # Methods have an extra paramter for the this (or receiver) parameter
+  ^\s*func\s+\([\w *]+\)\s+([\w]+)\(
+routines_end
+
+# Swift
+routines  Code  routine.*   *.swift   OUT:Complexity.csv \
+OPT:DECISIONS:(\b(case|if|else|for|while)\b)
+  # In Swift, functions are declared as
+  # func name(parameter-list) -> (result-list) {
+  ^\s*func\s+([\w]+)\(
+  # Method overrides
+  ^\s*override\s+func\s+([\w]+)\(
+  # Initializers
+  ^\s*(?:convenience|required)\s+(init)\(
+  ^\s*(?:convenience|required)\s+(?:convenience|required)\s+(init)\(
+  ^\s*(init)\(
+  # Annotations for UI
+  ^\s*(?:@IBAction|@IBOutlet)\s+func\s+([\w]+)\(
+routines_end
+
+# Erlang
+routines  Code  routine.*   *.erl   OUT:Complexity.csv \
+OPT:DECISIONS:(\b(case|if)\b)
+  # functions
+  ^[\w]+\([^\)]*\)\s*->
+routines_end
+
+# R
+# See http://cran.r-project.org/doc/manuals/r-release/R-lang.html
+routines  Code  routine.*   *.r   OUT:Complexity.csv OPT:DECISIONS:(\b(if|else|for|while|switch|repeat|stop|on.exit)\b)
+    \s*"(\w+)"\s*<-\s*function\(
+    \s*(\w+)\s*<-\s*function\(
+routines_end

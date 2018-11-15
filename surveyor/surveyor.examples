@@ -1,0 +1,175 @@
+#=============================================================================
+#
+#   Examples of how config files can be used to tune Surveyor and
+#   perform advanced measurement and seaching.
+#
+#   The contents of this file may be used as a template. Customized content
+#   should be copied into a config file placed in the root of the tree being
+#   measured or searched.
+#
+#   Different sub-branches of the tree can be configured separetly by placing
+#   config files in them with the same name.
+#
+#   This file is also used by surveyor automated tests
+#
+#=============================================================================
+# Copyright 2008-2012, Matt Peloquin. This file is part of Code Surveyor,
+# covered under GNU GPL v3 and is distributed WITHOUT ANY WARRANTY.
+#=============================================================================
+
+# Constants can be defined
+# For example, _CODE_FILES_ defines a set of file extensions for use in config lines
+CONSTANT:_CODE_FILES_: *.cpp;*.java;*.cs;*.js
+
+IGNORE_START
+Anything inbetween IGNORE tags is not processed
+IGNORE_STOP
+
+#-------------------------------------------------------------------------
+#  General configuraiton options
+
+# Code Measure Options
+measure Code  *  *.py   OPT:METADATA_ALL  OPT:PYTHON
+
+# File Exclusion
+# You can specify files to exclude vs. include on a config entry
+# by prefixing file filters with EX: and separating with : instead of ;
+measure Document  *  EX:*.zip:*.rar:*.jpg:*.png:*.i   TextLines
+
+
+# If file line starts with nothing but a number and comma or decimal,
+# assume it is a bitmap or data block and treat as content
+CONSTANT:_CONTENTLINE_: OPT:CONTENT_DETECTORS:[[re.compile(r'^\s*[0-9x\.,]+?',re.IGNORECASE),re.compile(r'.*$',re.IGNORECASE)]]
+measure  Code  *  *.c   _CONTENTLINE_
+
+
+#-------------------------------------------------------------------------
+#  Searching in code
+#  The Code csmodule knows how to do line-by-line searches in NBNC lines
+#  Skipping comments, machine generated code, etc.
+
+CONSTANT:_LITERAL_OUT_: OUT:Literals.csv
+
+# Find numeric literals
+search  Code  search.*  _CODE_FILES_  MagicNum  _LITERAL_OUT_
+    (?<!\w)(\d+)(?!\w)
+    (?<!\w)0[xX]([0-9a-fA-F]+)
+search_end
+
+# Find string literals
+# We need to use the SEARCH_STRINGS option so strings won't be stripped
+search  Code  search.*  _CODE_FILES_  Strings  _LITERAL_OUT_  OPT:INCLUDE_STRINGS
+    ([\"].+[\"])
+    ([\'].+[\'])
+search_end
+
+
+#-------------------------------------------------------------------------
+#  General Search
+#  The Search csmodule does not attempt any code parsing, but can provide
+#  postive-negative searches, and multi-line searches
+
+CONSTANT:_SEARCH_OUT_: OUT:Searches.csv
+
+# Find Copyright notices
+search  Search  *  _CODE_FILES_  Copyright  _SEARCH_OUT_
+    POSITIVE__copyright
+    POSITIVE__\s+ tm \s+
+    POSITIVE__\(\s*c\s*\)
+    NEGATIVE__TBD-NamesToExclude
+search_end
+
+search_multi  Search  *  _CODE_FILES_  Copyright  OPT:CASE_SENSITIVE  _SEARCH_OUT_
+    POSITIVE__/\* .*? Copyright .*? \*/
+    NEGATIVE__/\* .*? TBD-NamesToExclude .*? \*/
+search_end
+
+# Look in ALL files for authentication items
+search  Search  *   *   Authentication  _SEARCH_OUT_
+    authenicat
+    login
+    user.*password
+    connection
+search_end
+
+
+#-------------------------------------------------------------------------
+#  Per-Routine Complexity Metrics
+#  Using the routines verb, metrics can be collected for routines in a
+#  file based on using RE expressions to detect starts of routines
+#  Depending on your language and coding style, this approach can provide
+#  very close per-routine metrics
+
+routines  Code  routine.*   *.py   OUT:Complexity.csv  OPT:PYTHON
+    \s*def\s+(\w+)
+routines_end
+
+# Capture the various punctuation symbols that may be used in routine delcarations
+CONSTANT:_CHARS_:\.\[\]\&\*<>:
+
+# Captures most C# methods without false positives
+routines  Code  routine.*   *.cs     OUT:Complexity.csv
+    ^.*? (?:public|private|protected|static|internal) (?!\s+class|\s+struct|\s+sealed) ([\w \t_CHARS_]+) \s*\(
+    ^.*?void ([\w \t_CHARS_]+) \s*[\(\n]
+routines_end
+
+# Capture most Java methods without false positives
+# Note that in this example we are overriding the Code.py default decision detection
+routines  Code  routine.*   *.java  OUT:Complexity.csv  \
+OPT:DECISIONS:(\b(if|else|for|while)\b)
+
+    ^.*? (?:public|private|protected|static|void) ([\w \t_CHARS_]+) \s*\(
+
+routines_end
+
+
+#-------------------------------------------------------------------------
+#  Machine Code
+#  Surveyor detects blocks of generated machine code with default regex start/stop
+#  detectors in Machine.py
+
+# Override the machine detection code and do per-routine complexity metrics on code
+# marked as machine generated
+# NOTE THERE CAN BE NO SPACES IN regex expressions in the config file
+routines  Code  routine.*  *.py   MachineCode  OPT:MACHINE_MEASURE  OUT:MachineComplexity.csv  OPT:PYTHON  \
+OPT:MACHINE_DETECTORS:[\
+    [re.compile(r'startORM',re.IGNORECASE),re.compile(r'endORM',re.IGNORECASE)],\
+    [re.compile(r'\bcreated\b.*?\b(using|tool|auto)\b.*$',re.IGNORECASE),None]]
+
+    \s*def\s+(\w+)
+
+routines_end
+
+
+#-------------------------------------------------------------------------
+#  Including Config Files
+#  Config files can include other config filea, but the semantics can be tricky
+#
+#  1) Between config files, each config entry line is matched based on file filter string
+#  2) If the file doing the including defines an exact match of the file filter string
+#     before the include it will NOT be overrideen by the include. This allows redefining
+#     only part of a root config file by a child. Note the file filter string must
+#     match exactly, e.g., "*.c;*.h" would only override "*.c;*.h" -- having seperate
+#     entries for "*.c" and "*.h" won't ovverride, and can cause a double count validation
+#     error
+#
+#  An optional tag value can be used to brand all lines included with a new tag; this allows
+#  the inclusion of an existing config file, while marking all files in a given sub folder
+#  branch with a specific tag
+#  If a relative path is provided it will be used from the path the config file is
+#  found in, or an absolute path may be provided.
+
+INCLUDE:surveyor.code: NEW_INCLUDE_TAG  OPT:IGNORE_SIZE:10000
+
+
+
+#-------------------------------------------------------------------------
+#  Documents
+
+measure  Document  *   *.pdf                            pdf
+measure  Document  *   *.txt;*.me;readme                text
+measure  Document  *   *.xls;*.xlsx;*.xlsm;*.xla;*.ods  sheet
+measure  Document  *   *.doc;*.docx;*.odt;*.rtf         doc
+measure  Document  *   *.ppt;*.pptx;*.odp               deck
+measure  Document  *   *.mdx                            rational
+measure  Document  *   *.csv;*.tsv                      data

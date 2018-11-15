@@ -1,0 +1,127 @@
+#=============================================================================
+#
+#   Code Surveyor configuration file for searching
+#   Modified April 2015 for Castine
+#
+#   This will be used if no config file is provided for a surveyor job.
+#   See the help at "surveyor.py -? c" for more info.
+#
+#   SURVEYOR WORKS BEST WITH TUNED CONFIG FILES!
+#   You can use this as a starting template for your config file.
+#   When surveying a new folder tree, you may want to use the -a option to
+#   scan all file types, and then include all relevant file types in
+#   your tuned config file.
+#
+#   Basic config file format is below, FOR MORE SEE "surveyor.examples":
+#
+#     <verb>  <module>  <measures>  <files>  <tag1> <tag2> <tagN>
+#
+#     <verb>
+#     The active a module should perform. The "Code" module supports:
+#        "measure"  -- Metrics on a per-file basis
+#        "routines" -- Per-routine metrics
+#        "search"   -- Searches files line by line
+#
+#     <module>
+#     csmodule to use; the Python filename without the .py extension
+#
+#     <measures>
+#     Controls which of the module's measurements will appear in be output.
+#     Can use astrisk wildcards ("*", "file.*", "file.nbnc")
+#
+#     <files>
+#     Files to measure; normally a fnmatch string for file types ("*.py")
+#     Multiple masks may be separated with semicolons ("*.h;*.cpp")
+#     NO_EXT matches files with no extension
+#
+#     <tag1> <tag2> <tagN>
+#     User-defined strings attached to output mesurement rows
+#
+#=============================================================================
+# Copyright 2004-2012, Matt Peloquin and Construx. This file is part of Code
+# Surveyor, covered under GNU GPL v3 and is distributed WITHOUT ANY WARRANTY.
+#=============================================================================
+# Constants can be defined
+# For example, _CODE_FILES_ defines a set of file extensions for use in config lines
+CONSTANT:_CODE_FILES_:*.cpp;*.java;*.cs;*.js;*.ts;*.coffee;*.c;*.cxx;*.sql;*.rdl;*.wsdl;*.cmd;*.aspx;*.asmx;*.asax;*.rb;*.rjs;*.idl;*.vb;*.frm;*.ctl;*.cls;*.erl;*.m;*.mm;*.cshtml;*.php;*.jsp;*.jspx;*.r;*.py;*.swift;*.go;*.as
+
+CONSTANT:_SEARCH_OUT_: OUT:Searches.csv
+CONSTANT:_LITERAL_OUT_: OUT:Literals.csv
+
+#-------------------------------------------------------------------------
+#  Searching in code
+#  The Code csmodule knows how to do line-by-line searches in NBNC lines
+#  Skipping comments, machine generated code, etc.
+
+
+# Find numeric literals
+search  Code  search.*  _CODE_FILES_  MagicNum  _LITERAL_OUT_
+    (?<!\w)(\d+)(?!\w)
+    (?<!\w)0[xX]([0-9a-fA-F]+)
+search_end
+
+# Find string literals
+# We need to use the SEARCH_STRINGS option so strings won't be stripped
+search  Code  search.*  _CODE_FILES_  Strings  _LITERAL_OUT_  OPT:INCLUDE_STRINGS
+    ([\"].+[\"])
+    ([\'].+[\'])
+search_end
+
+# Find classes
+search  Code  search.*  _CODE_FILES_  Classes	_LITERAL_OUT_
+    (?:public|private|protected)\s+class\s+([A-Za-z_0-9 :<>,]+)
+    (?:public|private|protected)\s+(?:abstract|static|partial)\s+class\s+([A-Za-z_0-9 :<>,]+)
+search_end
+
+search  Code  search.*  _CODE_FILES_  Interfaces	_LITERAL_OUT_
+    (?:public|private|protected)\s+interface\s+([A-Za-z_0-9 :<>,]+)
+search_end
+
+# Find exceptions - added raise/expect for Ruby for Hanoi
+# raise/except for Python
+# Note \w is any alpha-numeric + _; added "." to handle e.g.
+# System.ArgumentNullException
+# Assert.Throws / Assert.DoesNotThrow is for test code
+search  Code  search.*  _CODE_FILES_  Catch	_SEARCH_OUT_
+  Assert.Throws\s+(.*)
+  Assert.DoesNotThrow\s+(.*)
+  catch\s+\(([\w.]+)\)
+  catch\s+\(([\w.]+)\s+\w+\)
+  expect\s+\(([\w.]+)\)
+  expect\s+{
+  except\s+:
+  except\s+([\w.]+):
+  except\s+([\w.]+),\s+\w+:
+  except\s+([\w.]+)\s+as\s+\w+:
+search_end
+
+search  Code  search.*  _CODE_FILES_  Throw	_SEARCH_OUT_
+  throw\s+new\s+([\w.]+)\(.*
+  throw\s+new\s+([\w.]+)\s*\(.*
+  throw\s+([\w.]+);
+  throw;
+  raise
+  raise\s+(\w+),
+  raise\((\w+)\)
+  raise\s+(\w+)\(
+search_end
+
+#-------------------------------------------------------------------------
+#  General Search
+#  The Search csmodule does not attempt any code parsing, but can provide
+#  postive-negative searches, and multi-line searches
+
+# Find Copyright notices
+search  Search  *  _CODE_FILES_  Copyright  _SEARCH_OUT_
+    POSITIVE__copyright
+    POSITIVE__\s+ tm \s+
+    POSITIVE__\(\s*c\s*\)
+search_end
+
+# Look files for authentication items
+search  Search  *   _CODE_FILES_   Authentication  _SEARCH_OUT_
+    authenticat
+    login
+    user.*password
+    connection
+search_end

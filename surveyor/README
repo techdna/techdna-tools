@@ -1,0 +1,168 @@
+
+Code Surveyor 6
+
+Free to use and modify via GNU General Public License (GPL) v3
+Copyright 2004-2012 Matt Peloquin and Construx, see LICENSE for usage rights
+
+Code Surveyor is an application and framework for measuring and searching code
+files using regular expressions. Surveyor provides summary metrics along with
+per-file output that allows for easy analysis in a spreadsheet.
+
+
+Using Surveyor
+==============
+Surveyor is a Python application compatible with Python 2.6 and later.
+Self-contained executables for Windows, Linus, and Osx are also available.
+
+http://code.google.com/p/codesurveyor
+
+Surveyor is a command-line application run from your shell. The following
+examples will run Surveyor and display the top-level help.
+
+    surveyor -?                     (Windows, Surveyor exe in path)
+    surveyor.py -?                  (Windows, Python in path and associated to .py)
+    ./surveyor -?                   (Linux, OSX executeable in current folder)
+    bash python surveyor.py -?      (Linux, OSX running Python script)
+
+With each run Surveyor walks the target folder tree searching for config 
+file(s) named "surveyor.code". If no "surveyor.code" files are found 
+Surveyor will use its default config file (see below).
+
+Surveyor displays summary metrics to the console, but the deeper value is in
+the csv output (surveyor.csv by default). This contains per-file metrics that
+allow easy analysis with pivot tables.
+
+Surveyor will spawn as many worker processes as you have cores.
+
+
+Config Files
+=============
+Surveyor measurement is driven by config files that define:
+
+    - File types to include in the job
+    - csmodules (Code Surveyor Modules) used to measure those files
+    - Options to modify measurements or output
+
+The default surveyor.code config file should be located with Surveyor.
+
+To customize the measure of a folder tree copy surveyor.code to root of the
+folder tree and modify to include the files and measures you care about.
+To modify measurement or output for different branches of the tree, place
+different config files (with the same name) at the top of the folder branches.
+
+To exclude measurement of a branch, place an empty config at the top.
+
+See "surveyor.code" and "surveyor.examples" config files in the Surveyor root
+for documentation and eamples on how to configure Surveyor via config files.
+
+
+Tips and Tricks
+===============
+
+"Scan All"
+----------
+Unless custom config files are used, Surveyor looks in the default surveyor.code
+file to decide which file types to measure. 
+
+Although the default file has a large number of file types, it may not map file 
+types appropriately for your folder tree. You may not know all of the file types
+present in an older code base. In that case, running surveyor with the 
+various "-all" options can provide a quick view of what exists in the folder
+tree, which can then be used to create a tuned config file.
+
+Run with "-? a" for detailed help on this option.
+
+NO_EXT Extension
+----------------
+The NO_EXT name is used in config files for files with no extension. If you have
+code/script files mixed with binary files with no extension, you can skip binary
+files with the -sb option.
+
+Machine-generated code
+----------------------
+Surveyor attempts to separate machine-generated code from human-written code.
+This is done with Surveyor's block-detection capability and a set of regex
+patterns in Code.py. 
+
+Surveyor metrics do NOT include machine-generated code by default. This has 
+the potential to confuse metrics if there are significant false-positve hits
+on machine defection. Machine-generated lines are reported in:
+
+    file.machine
+
+To see what may be triggering a block change to machine-generated code,
+run with the following debug option: "-z1c"
+
+To disable machine-code detection, you can use the OPT:NO_MACHINE_NONE
+config tag option. The "-an" command line option also will not measure 
+machine code. Tune regex for machine code with OPT:MACHINE_DETECTORS
+(see surveyor.examples).
+
+Performance
+-----------
+Surveyor performance varies widely depending on the size and nature of
+the files being measured, what measures are run, and hardware performance.
+Jobs with extensive regular expression processing are likely to be CPU bound.
+Using RAM file caching will improve performance if multiple Surveyor jobs are
+run back-to-back (file opens and reads can add up over large code bases).
+
+Key Surveyor optimizations include:
+    - Parallel per-core processing. The files in each folder will be
+      partitioned into a work package for a core to process. If there are
+      a large number of files or large files in a folder, it may be
+      partitioned further.
+    - Caching open files. Some surveyor jobs may run multiple search
+      passes on the same file. Open is an expensive operation, so caching
+      the file saves significantly for large code bases.
+
+The best way to increase Surveyor job speed is to only process the files you
+need; make sure your config files only include file types you care about.
+If you have large numbers of third-party or data files that don't
+need to be included, you can exclude them by placing empty config files at
+the root of the folder branch that contains them. For a quick scan of all 
+files use the "-am" option.
+
+
+System Overview
+================
+Most design information is documented in the code itself; see specific files
+for descriptions of modules and classes.
+
+Surveyor's design approach blends application, script, and OO framework;
+it intendes to balance several sometimes conflicting goals:
+
+    - easy to use out of the box as a stand-alone application
+    - high configurability through config files and command-line options
+    - measurement customization by anyone comfortable with regex
+    - easy extensibility for file processing through csmodules
+    - make framework internals accessible to non-Python programmers
+
+Surveyor roughly follows Python programming idioms but is intended to be
+accessible and self-evident to programmers who do not have a Python background.
+The design is primarily object-oriented but Surveyor code strives to have a
+"scriptable feel", i.e., as small as possible. Thus procedural approaches
+and/or less abstraction are used when it better achieves this goal.
+
+csmodules
+---------
+The csmodules (Code Surveyor Modules) package holds modules that define
+measurement behavior. The two most important of these are:
+
+    NBNC.py -- Core per-line implementation for measuring code files. See 
+               it's comment header for a description of NBNC line logic.
+
+    Code.py -- Logic for machine-detection, routine-dection, searching, 
+               more detailed code measurements.
+
+See "csmodules\__init__.py" for a design overview.
+
+framework
+---------
+The framework package contains the key abstractions and behavior.
+See "framework\__init__.py" for an overview.
+
+
+Notes
+=====
+Thanks to Jason Hills for early work on Surveyor.
+Contact matt@peloquin.com about contributing to the codesurveyor project.

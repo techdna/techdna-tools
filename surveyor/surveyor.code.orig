@@ -1,0 +1,147 @@
+#=============================================================================
+#
+#   Code Surveyor default configuration file
+#
+#   This will be used if no config file is provided for a surveyor job.
+#   See the help at "surveyor.py -? c" for more info.
+#
+#   SURVEYOR WORKS BEST WITH TUNED CONFIG FILES!
+#   You can use this as a starting template for your config file.
+#   When surveying a new folder tree, you may want to use the -a option to
+#   scan all file types, and then include all relevant file types in
+#   your tuned config file.
+#
+#   Basic config file format is below, FOR MORE SEE "surveyor.examples":
+#
+#     <verb>  <module>  <measures>  <files>  <tag1> <tag2> <tagN>
+#
+#     <verb>
+#     The active a module should perform. The "Code" module supports:
+#        "measure"  -- Metrics on a per-file basis
+#        "routines" -- Per-routine metrics
+#        "search"   -- Searches files line by line
+#
+#     <module>
+#     csmodule to use; the Python filename without the .py extension
+#
+#     <measures>
+#     Controls which of the module's measurements will appear in be output.
+#     Can use astrisk wildcards ("*", "file.*", "file.nbnc")
+#
+#     <files>
+#     Files to measure; normally a fnmatch string for file types ("*.py")
+#     Multiple masks may be separated with semicolons ("*.h;*.cpp")
+#     NO_EXT matches files with no extension
+#
+#     <tag1> <tag2> <tagN>
+#     User-defined strings attached to output mesurement rows
+#
+#=============================================================================
+# Copyright 2004-2012, Matt Peloquin and Construx. This file is part of Code
+# Surveyor, covered under GNU GPL v3 and is distributed WITHOUT ANY WARRANTY.
+#=============================================================================
+
+# Verb  Module Measures Files                           Tag1        Tag2    Tag3 / Options/ Comments
+
+measure  Code   *       Makefile         		build	    code    
+measure  Code   *       NO_EXT;*.sh;*.bat;*.cmd         shell       code    
+measure  Code   *       .ps1                            shell       code    PS
+measure  Code   *       *.java                          java        code
+measure  Code   *       *.cs                            csharp      code    .net
+measure  Code   *       *.asm;*.s                       asm         code
+measure  Code   *       *.c;*.cpp;*.cc;*.cxx            c_c++       code    definition
+measure  Code   *       *.h;*.hpp;*.hxx                 c_c++       code    declaration
+measure  Code   *       *.m                             objectivec  code
+measure  Code   *       *.sql;*.ddl;*.pls;*.pks;*.pck   sql         code
+measure  Code   *       *.tbl;*.sp;*.proc;*.trg;*.view  sql         code
+measure  Code   *       *.xsd;*.xsl;*.xslt              xml         code
+measure  Code   *       *.js                            javascript  code    OPT:ADD_LINE_SEP:;   # Split lines in compiled files
+measure  Code   *       *.py;*.pyd;*.pyw                python      code    OPT:PYTHON   # Python triple quote support
+measure  Code   *       *.rb;*.rjs                      ruby        code
+measure  Code   *       *.pl;*.pm;*.ps;*.t              perl        code    # Note potential conflict with postscript .ps files
+measure  Code   *       *.lua                           lua         code
+measure  Code   *       *.tcl                           tcl         code
+measure  Code   *       *.groovy                        groovy      code
+measure  Code   *       *.aj                            aspectjava  code
+measure  Code   *       *.as;*.fla                      flex        code    # fla files may need to be excluded
+measure  Code   *       *.cls;*.page;*.tab;*.trigger    apex        code    # Force.com Apex and metadata
+measure  Code   *       *.workflow;*.object;*.component apex        code    OPT:BLANK_LINE_XML
+measure  Code   *       *.vbs;*.vba                     vba         code    OPT:COMMENT_OPEN:(?!)  # Option disables multi-line
+measure  Code   *       *.f;*.ftn;*.for;*.f90           fortran     code
+measure  Code   *       *.lsp;*.lisp;*.cl;*.el          lisp        code
+measure  Code   *       *.hx                            haxe        code
+measure  Code   *       *.scala                         scala       code
+measure  Code   *       *.fsx                           fsharp      code    .net
+measure  Code   *       *.erl                           erlang      code
+measure  Code   *       *.scm                           scheme      code
+measure  Code   *       *.hs                            haskel      code
+measure  Code   *       *.e;*.eiffel                    eiffel      code
+measure  Code   *       *.ada;*.ads;*.adb               ada         code
+measure  Code   *       *.cfm;*.cfc                     coldfusion  code
+measure  Code   *       *.cla;*.cln;*.txd;*.txa         clarion     code
+measure  Code   *       *.d                             d           code
+measure  Code   *       *.awk                           awk         code
+measure  Code   *       *.l;*.lex;*.y;*.yrl;*.g         parsing     code
+measure  Code   *       *.r                             math        code
+measure  Code   *       *.v;*.sv;*.vhd;*.vlib;*.vpp     hdl         code    hardware
+measure  Code   *       *.svb;*.mts;*.t                 test        code
+measure  Code   *       *.nsh;*.ism;*.wse;*.rul         install     code
+measure  Code   *       *.mak;*.*proj                   build       code    # Lots of build file types; tune with file names
+
+
+# File types that can overlap
+# Commented out, because of file extension conflicts
+# measure  Code   *       *.s;*.m                        math        code
+# measure  customProlog * *.pl                           prolog      code
+# measure  Code   *       *.p;*.i;*.w;*.cls              progress    code
+
+
+# Custom Surveyor modules exist for the different comment syntax of these
+measure  customCobol        *   *.cob;*.cbl;*.cobol     cobol       code
+measure  customDelphi       *   *.pas                   delphi      code
+measure  customPowerBuilder *   *.pbl                   pb          code
+
+
+# VB requires some specific machine code detection
+measure  Code   *       *.vb                            vb.net      code    .net  \
+    OPT:COMMENT_OPEN:(?!)  \
+    OPT:MACHINE_ADD_DETECT:[re.compile(r'Sub\s+InitializeComponent'),re.compile(r'End\s+Sub')]
+measure  Code   *       *.bas;*.frm;*.ctl;*.mod         vb6         code    \
+    OPT:COMMENT_OPEN:(?!) \
+    OPT:MACHINE_ADD_DETECT:[re.compile(r'^version\s+[1-6]\.0',re.IGNORECASE),re.compile(r'^end',re.IGNORECASE)]
+# VB6 .cls overlaps with Force.com
+#measure  Code   *       *.cls                           vb6         code  OPT:COMMENT_OPEN:(?!)  \
+#    OPT:MACHINE_ADD_DETECT:[re.compile(r'^version\s+[1-6]\.0',re.IGNORECASE),re.compile(r'^end',re.IGNORECASE)]
+
+
+# Web/UI related files
+# Note use of Web module that will separate code from content, so if there is a
+# lot of embedded JS for instance, it should be counted as code
+measure  Web    *       *.php;*.php?;*.cgi;*.inc        php         code
+measure  Web    *       *.xaml                          xaml        code    .net
+measure  Web    *       *.jsp;*.tld                     jsp         code
+measure  Web    *       *.asp;*.ascx;*.aspx;*.asax      asp         code
+measure  Web    *       *.rhtml                         ruby        code
+measure  Web    *       *.haml                          haml        code
+measure  Web    *       *.mxml                          flex        code
+measure  Web    *       *.htm;*.html;*.css              web         code
+measure  Web    *       *.xhtml;*.htc                   web         code
+
+# Other resource, content, or data files with code-like structure
+# Normally this content wouldn't be human-written, so you'd often want to exclude
+measure  NBNC   *       *.xml;*.xss;*.xsc;*.xsx         xml         other    OPT:BLANK_LINE_XML
+measure  NBNC   *       *.properties;*.config;*.policy  config      other
+measure  NBNC   *       *.conf;                         config      other
+measure  NBNC   *       *.json                          json        other
+measure  NBNC   *       *.po                            perl        other
+measure  NBNC   *       *.yml;*.yaml                    yaml        other
+measure  NBNC   *       *.rdl;*.rdlc;*.rpt              report      other
+measure  NBNC   *       *.wsdl;*.idl;*.rpc;*.ridl       interface   other
+measure  NBNC   *       *.res;*.str                     resource    other
+measure  NBNC   *       *.ashx;*.asmx;*.resx            resource    other   .net
+measure  NBNC   *       *.dsp;*.sln                     build       other
+measure  NBNC   *       *.csproj;*.vcproj;*.vcxproj     build       other
+measure  NBNC   *       *.vdproj                        build       other
+measure  NBNC   *       *.bpel                          bpel        other
+measure  customDelphi * *.dfm                           delphi      other
+
