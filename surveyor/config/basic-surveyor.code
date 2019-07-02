@@ -46,6 +46,7 @@
 measure  Code   *       Makefile         		build	    other
 measure  Code   *       Rakefile         		build	    other
 measure  Code   *       *.cmake         		build	    other
+measure  Code   *       *.kt	         		kotlin      code
 measure  Code   *       *.am         		        build	    other
 measure  Code   *       *.gradle       		        build	    other
 measure  Code   *       *.py;*.pyd;*.pyw;*.ipynb        python      code    OPT:PYTHON   # Python triple quote support
@@ -70,6 +71,8 @@ measure  Code   *       *.aj                            aspectjava  code
 measure  Code   *       *.as;*.fla                      actionscript code    # fla files may need to be excluded
 measure  Code   *       *.cls;*.page;*.tab;*.trigger    apex        code    # Force.com Apex and metadata
 measure  Code   *       *.sql;*.ddl;*.pls;*.pks;*.pck   sql         code
+measure  Code   *       *.cql                           cassandra   code   # Cassandra Query Language
+measure  Code   *       *.sol                           solidity    code   # Solidity smart contract
 measure  Code   *       *.mwb			        sql         code
 measure  Code   *       *.tbl;*.sp;*.proc;*.trg;*.view  sql         code
 measure  Code   *       *.xsd;*.xsl;*.xslt              xml         code    OPT:BLANK_LINE_XML
@@ -97,8 +100,9 @@ measure  Code   *       *.uitest                        test        code
 measure  Code   *       *.postrm;*.postinst             install     code
 measure  Code   *       *.nsh;*.ism;*.wse;*.rul         install     code
 measure  Code   *       *.mak;*.*proj                   build       other    # Lots of build file types; tune with file names
-measure  Code   *       *.ewp;*.ewd                     build       other    # ARM
-measure  Code   *       *.uvprojx;*.uvoptx              build       other    # ARM
+measure  Code   *       *.sbt                           build       other    # Scala Build Tool
+measure  Code   *       *.ewp;*.ewd                     build       other    
+measure  Code   *       *.uvprojx;*.uvoptx              build       other    
 measure  Code   *       *.rng                           xml         code    OPT:BLANK_LINE_XML
 measure  Code   *       *.settings                      xml         code    OPT:BLANK_LINE_XML
 measure  Code   *       *.meta                          xml         code    OPT:BLANK_LINE_XML

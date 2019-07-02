@@ -1,0 +1,94 @@
+# Ignore file for Visual Studio 2008
+syntax: glob
+*.pyc
+*.sqlite
+*.sqllite
+*.out
+*.csv
+*.log
+SurveyorProfileOut*
+surveyor/packaging/zOld/*
+surveyor/zOld/*
+surveyor/OUT/*
+surveyor/STAGING/*
+surveyor/build/*
+surveyor/dist/*
+surveyor/tests/output/*
+surveyor/tests/TestFiles/*
+surveyor/tests/TestOracle/*
+surveyor/packaging/pyinstaller/warnsurveyor.txt
+Thumbs.db
+surveyor.xml
+*.BAK
+*.orig
+*.*~
+*.zip
+surveyorsql/create_complexity.sql
+surveyorsql/create_literals.sql
+surveyorsql/create_search.sql
+surveyorsql/create_surveyor.sql
+surveyorsql/drop_surveyor.sql
+surveyorsql/SurveyorHash.dat
+surveyorsql/MyDB.sqlite
+staticanalysis/cheetah/*
+
+# Ignore Visual Studio 2008 files
+*.obj
+*.exe
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*.vsp
+*.psess
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+*.lib
+*.sbr
+*.scc
+[Dd]ebug*/
+obj/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+[Bb]uild[Ll]og.*
+*.[Pp]ublish.xml
+_UpgradeReport_Files/*
+UpgradeLog.htm
+UpgradeLog.xml
+doclint/DocLintTests/~$*.docx
+doclint/DocLint_Log.txt
+*.bcp
+*.warn
+*.warn.leftovers
+
+# OS X
+.DS_Store
+
+# Temp Office files
+~$*
+
+# NuGet packages
+packages/
+
+# Indexes
+*.fi
+Tools_IDX/*
+
+# Signing keys - should not be in source control
+*.pfx
+*.cer
+*.pvk
+*.pem
+
+.vs
+.vscode
