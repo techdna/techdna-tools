@@ -53,22 +53,23 @@ different config files (with the same name) at the top of the folder branches.
 
 To exclude measurement of a branch, place an empty config at the top.
 
-A few configuration files are provided:
+A few Tech DNA tweaked configuration files are provided in the config sub-directory:
 
-	- surveyor.code - this is the basic per-file metrics configuration file;
+	- basic-surveyor.code - this is the basic per-file metrics configuration file;
 	  because it is called "surveyor.code" Surveyor will use it by default, i.e.
 	  no need to pass a -config command line.  This covers line counts for most
-	  known languages and project files.
+	  known languages and project files.  Note that the surveyor.code in this
+	  directory is identical to basic-surveyor.code.
 
-	- surveyor-routine-complexity.code - this is a configuration file that
+	- complexity-surveyor.code - this is a configuration file that
 	  focuses only on certain languages where per-routine complexity can be
 	  estimated using regular expressions to "parse" the code.  
 
-	- surveyor-searches-literals.code - this is a configuration file that searches
+	- searches-surveyor.code - this is a configuration file that searches
 	  for certain "interesting" patterns and also identifies literals in code files.
 	
-	- surveyor.examples - this acts as documenation for the various configuration
-	  file options.
+surveyor.examples in this directory acts as documenation for the various configuration
+file options.
 
 
 Tips and Tricks

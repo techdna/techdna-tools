@@ -1,6 +1,6 @@
 #=============================================================================
-#   Surveyor 5 Config File for per-Routine Complexity
-#   Mike Kelly Consulting LLC
+#   Surveyor 6 Config File for per-Routine Complexity
+#   Tech DNA LLC
 #
 #
 #   Different sub-branches of the tree can be configured separetly by placing
@@ -87,6 +87,13 @@ routines_end
 routines  Code  routine.*   *.java  OUT:Complexity.csv  \
 OPT:DECISIONS:(\b(if|else|for|while)\b)
     ^.*?\s(?:public|private|protected|static|void|function)\s([\w\s_CHARS_]+)\s*\(
+routines_end
+
+# Kotlin
+# Note that in this example we are overriding the Code.py default decision detection
+routines  Code  routine.*   *.kt  OUT:Complexity.csv  \
+OPT:DECISIONS:(\b(if|else|for|while|when)\b)
+    ^.*?\s(?:override|open|public|internal|sealed|abstract|final|inline|private|protected|infix|tailrec|fun)\s([\w\s_CHARS_]+)\s*\(
 routines_end
 
 # JavaScript and derivatives

@@ -23,14 +23,6 @@ surveyor.xml
 *.orig
 *.*~
 *.zip
-surveyorsql/create_complexity.sql
-surveyorsql/create_literals.sql
-surveyorsql/create_search.sql
-surveyorsql/create_surveyor.sql
-surveyorsql/drop_surveyor.sql
-surveyorsql/SurveyorHash.dat
-surveyorsql/MyDB.sqlite
-staticanalysis/cheetah/*
 
 # Ignore Visual Studio 2008 files
 *.obj
