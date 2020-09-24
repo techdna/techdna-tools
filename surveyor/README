@@ -14,8 +14,6 @@ Using Surveyor
 Surveyor is a Python application compatible with Python 2.6 and later.
 Self-contained executables for Windows, Linus, and Osx are also available.
 
-http://code.google.com/p/codesurveyor
-
 Surveyor is a command-line application run from your shell. The following
 examples will run Surveyor and display the top-level help.
 
@@ -25,14 +23,17 @@ examples will run Surveyor and display the top-level help.
     bash python surveyor.py -?      (Linux, OSX running Python script)
 
 With each run Surveyor walks the target folder tree searching for config 
-file(s) named "surveyor.code". If no "surveyor.code" files are found 
-Surveyor will use its default config file (see below).
+file(s) named "surveyor.code" (or matching the name of the configuration file
+passed with the -config command line option if used).
+If no "surveyor.code" files are found Surveyor will use its
+default config file (see below).
 
 Surveyor displays summary metrics to the console, but the deeper value is in
 the csv output (surveyor.csv by default). This contains per-file metrics that
-allow easy analysis with pivot tables.
+allow easy analysis with Excel pivot tables.
 
-Surveyor will spawn as many worker processes as you have cores.
+Surveyor typically runs quite quickly even over relatively large code bases;
+it will spawn as many worker processes as you have cores.
 
 
 Config Files
@@ -52,8 +53,22 @@ different config files (with the same name) at the top of the folder branches.
 
 To exclude measurement of a branch, place an empty config at the top.
 
-See "surveyor.code" and "surveyor.examples" config files in the Surveyor root
-for documentation and eamples on how to configure Surveyor via config files.
+A few configuration files are provided:
+
+	- surveyor.code - this is the basic per-file metrics configuration file;
+	  because it is called "surveyor.code" Surveyor will use it by default, i.e.
+	  no need to pass a -config command line.  This covers line counts for most
+	  known languages and project files.
+
+	- surveyor-routine-complexity.code - this is a configuration file that
+	  focuses only on certain languages where per-routine complexity can be
+	  estimated using regular expressions to "parse" the code.  
+
+	- surveyor-searches-literals.code - this is a configuration file that searches
+	  for certain "interesting" patterns and also identifies literals in code files.
+	
+	- surveyor.examples - this acts as documenation for the various configuration
+	  file options.
 
 
 Tips and Tricks

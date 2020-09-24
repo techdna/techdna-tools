@@ -43,27 +43,40 @@
 
 # Verb  Module Measures Files                           Tag1        Tag2    Tag3 / Options/ Comments
 
-measure  Code   *       Makefile         		build	    code    
-measure  Code   *       *.py;*.pyd;*.pyw                python      code    OPT:PYTHON   # Python triple quote support
-measure  Code   *       *.rb;*.rjs                      ruby        code
+measure  Code   *       Makefile         		build	    other
+measure  Code   *       Rakefile         		build	    other
+measure  Code   *       *.cmake         		build	    other
+measure  Code   *       *.kt	         		kotlin      code
+measure  Code   *       *.am         		        build	    other
+measure  Code   *       *.gradle       		        build	    other
+measure  Code   *       *.py;*.pyd;*.pyw;*.ipynb        python      code    OPT:PYTHON   # Python triple quote support
+measure  Code   *       *.rb;*.rjs;*.erb                ruby        code
 measure  Code   *       *.js                            javascript  code    OPT:ADD_LINE_SEP:;   # Split lines in compiled files
+measure  Code   *       *.ts;*.jsx                      javascript  code    typescript
 measure  Code   *       *.java                          java        code
-measure  Code   *       *.cs                            csharp      code    .net
-measure  Code   *       *.c;*.cpp;*.cc;*.cxx            c_c++       code    definition
-measure  Code   *       *.h;*.hpp;*.hxx                 c_c++       code    declaration
+measure  Code   *       *.cs                            csharp      code    .net OPT:COMMENT_LINE://
+measure  Code   *       *.c;*.cpp;*.cc;*.cxx;*.inl      c_c++       code    definition
+measure  Code   *       *.h;*.hpp;*.hxx;*.hh            c_c++       code    declaration
+measure  Code   *       *.go                            go          code
+measure  Code   *       *.swift                         swift       code
 measure  Code   *       *.m;*.mm                        objectivec  code
 measure  Code   *       *.asm;*.s                       asm         code
 measure  Code   *       *.pl;*.pm;*.ps;*.t              perl        code    # Note potential conflict with postscript .ps files
 measure  Code   *       *.coffee                        coffee      code
 measure  Code   *       *.lua                           lua         code
+measure  Code   *       *.ms                            script      code
 measure  Code   *       *.tcl                           tcl         code
 measure  Code   *       *.groovy                        groovy      code
 measure  Code   *       *.aj                            aspectjava  code
-measure  Code   *       *.as;*.fla                      flex        code    # fla files may need to be excluded
+measure  Code   *       *.as;*.fla                      actionscript code    # fla files may need to be excluded
 measure  Code   *       *.cls;*.page;*.tab;*.trigger    apex        code    # Force.com Apex and metadata
 measure  Code   *       *.sql;*.ddl;*.pls;*.pks;*.pck   sql         code
+measure  Code   *       *.cql                           cassandra   code   # Cassandra Query Language
+measure  Code   *       *.sol                           solidity    code   # Solidity smart contract
+measure  Code   *       *.mwb			        sql         code
 measure  Code   *       *.tbl;*.sp;*.proc;*.trg;*.view  sql         code
-measure  Code   *       *.xsd;*.xsl;*.xslt              xml         code
+measure  Code   *       *.xsd;*.xsl;*.xslt              xml         code    OPT:BLANK_LINE_XML
+measure  Code   *       *.hkb                           xml         other    OPT:BLANK_LINE_XML
 measure  Code   *       *.workflow;*.object;*.component apex        code    OPT:BLANK_LINE_XML
 measure  Code   *       *.vbs;*.vba                     vba         code    OPT:COMMENT_OPEN:(?!)  # Option disables multi-line
 measure  Code   *       *.f;*.ftn;*.for;*.f90           fortran     code
@@ -71,7 +84,7 @@ measure  Code   *       *.lsp;*.lisp;*.cl;*.el          lisp        code
 measure  Code   *       *.hx                            haxe        code
 measure  Code   *       *.scala                         scala       code
 measure  Code   *       *.fsx                           fsharp      code    .net
-measure  Code   *       *.erl                           erlang      code
+measure  Code   *       *.erl;*.hrl                     erlang      code
 measure  Code   *       *.scm                           scheme      code
 measure  Code   *       *.hs                            haskel      code
 measure  Code   *       *.e;*.eiffel                    eiffel      code
@@ -81,66 +94,86 @@ measure  Code   *       *.cla;*.cln;*.txd;*.txa         clarion     code
 measure  Code   *       *.d                             d           code
 measure  Code   *       *.awk                           awk         code
 measure  Code   *       *.l;*.lex;*.y;*.yrl;*.g         parsing     code
-measure  Code   *       *.r                             math        code
+measure  Code   *       *.r                             R           code
 measure  Code   *       *.svb;*.mts;*.t                 test        code
+measure  Code   *       *.uitest                        test        code
+measure  Code   *       *.postrm;*.postinst             install     code
 measure  Code   *       *.nsh;*.ism;*.wse;*.rul         install     code
-measure  Code   *       *.mak;*.*proj                   build       code    # Lots of build file types; tune with file names
-
+measure  Code   *       *.mak;*.*proj                   build       other    # Lots of build file types; tune with file names
+measure  Code   *       *.sbt                           build       other    # Scala Build Tool
+measure  Code   *       *.ewp;*.ewd                     build       other    
+measure  Code   *       *.uvprojx;*.uvoptx              build       other    
+measure  Code   *       *.rng                           xml         code    OPT:BLANK_LINE_XML
+measure  Code   *       *.settings                      xml         code    OPT:BLANK_LINE_XML
+measure  Code   *       *.meta                          xml         code    OPT:BLANK_LINE_XML
+measure  Code   *       *.nsi                           install     code
+measure  Code   *       *.patch                         patch       code
+measure  Code   *       *.vm                            vm          code  spring
+measure  Code   *       *.m4                            m4          code
+measure  Code   *       *.pig                           pig         code
 measure  Code   *       *.v;*.vh;*.sv;*.vhd;*.vlib;*.vpp  hardware  code
-
-# Web/UI related files
-# Note use of Web module that will separate code from content, so if there is a
-# lot of embedded JS for instance, it should be counted as code
 measure  Web    *       *.php;*.php?;*.cgi;*.inc        php         code
-measure  Web    *       *.jsp;*.tld                     jsp         code
+measure  Web    *       *.jsp*;*.tld                    jsp         code
+measure  Web    *       *.gsp*                          gsp         code
 measure  Web    *       *.ascx;*.aspx;*.asax;*.ashx     aspx        code    .net
 measure  Web    *       *.asp                           asp         code
 measure  Web    *       *.esp;*.esj                     esp         code
 measure  Web    *       *.rhtml                         ruby        code
+measure  Web    *       *.haml                          web         code
+measure  Web    *       *.cshtml                        razor       code
 measure  Web    *       *.mxml                          flex        code
-measure  Web    *       *.xaml                          xaml        code    .net
-measure  Web    *       *.haml                          haml        code
-measure  Web    *       *.htm;*.html;*.css              web         code
+measure  NBNC   *       *.xaml                          xaml        other    .net
+measure  NBNC   *       *.aml                           aml         other   doc
+measure  Web    *       *.htm;*.html;                   web         code    html
+measure  Web    *       *.css                           web         code    css
+measure  Web    *       *.less                          web         code
 measure  Web    *       *.xhtml;*.htc                   web         code
-
-# Custom Surveyor modules exist for the different comment syntax of these
+measure  Web    *       *.scss;*.sass                   web         code    css
 measure  customCobol        *   *.cob;*.cbl;*.cobol     cobol       code
 measure  customDelphi       *   *.pas                   delphi      code
 measure  customPowerBuilder *   *.pbl                   pb          code
-
-# File types that can overlap
-# Commented out, because of file extension conflicts
-# measure  Code   *       *.s;*.m                        math        code
-# measure  customProlog * *.pl                           prolog      code
-# measure  Code   *       *.p;*.i;*.w;*.cls              progress    code
-
-
-# VB requires some specific machine code detection
 measure  Code   *       *.vb                            vb.net      code    .net  \
     OPT:COMMENT_OPEN:(?!)  \
     OPT:MACHINE_ADD_DETECT:[re.compile(r'Sub\s+InitializeComponent'),re.compile(r'End\s+Sub')]
 measure  Code   *       *.bas;*.frm;*.ctl;*.mod         vb6         code    \
     OPT:COMMENT_OPEN:(?!) \
     OPT:MACHINE_ADD_DETECT:[re.compile(r'^version\s+[1-6]\.0',re.IGNORECASE),re.compile(r'^end',re.IGNORECASE)]
-# VB6 .cls overlaps with Force.com
-#measure  Code   *       *.cls                           vb6         code  OPT:COMMENT_OPEN:(?!)  \
-#    OPT:MACHINE_ADD_DETECT:[re.compile(r'^version\s+[1-6]\.0',re.IGNORECASE),re.compile(r'^end',re.IGNORECASE)]
 
-
-# Other resource, content, or data files with code-like structure
-# Normally this content wouldn't be human-written, so you'd often want to exclude
 measure  NBNC   *       *.xml;*.xss;*.xsc;*.xsx         xml         other    OPT:BLANK_LINE_XML
+measure  NBNC   *       *.ll                            llvm        code
+measure  NBNC   *       *.aml                           help        other    OPT:BLANK_LINE_XML
+measure  NBNC   *       *.builder                       config      other
+measure  NBNC   *       *.rake                          build       other
+measure  NBNC   *       *.pom                           build       other
+measure  NBNC   *       *.pbxproj                       build       other   xcode
 measure  NBNC   *       *.properties;*.config;*.policy  config      other
+measure  NBNC   *       *.tf			        config      other
+measure  NBNC   *       *.ini			        config      other
+measure  NBNC   *       *.properties           resource    other
+measure  NBNC   *       *.plist			        config      other
+measure  NBNC   *       *.ma;*.ShaderLib;*.prefab;*.xpm resource    other
 measure  NBNC   *       *.res;*.str;*.xib               resource    other
-measure  NBNC   *       *.ashx;*.asmx;*.resx            resource    other   .net
-measure  NBNC   *       *.rdl;*.rdlc;*.rpt              report      other
+measure  NBNC   *       *.rc                            resource    other
+measure  NBNC   *       *.po                            resource    other
+measure  NBNC   *       *.asmx;*.resx;*.resw            resource    other   .net
+measure  NBNC   *       *.rdl;*.rdlc;*.rpt;*.rptdesign	report      other
+measure  NBNC   *       *.raml				script      other
+measure  NBNC   *       *.rst				report      other
 measure  NBNC   *       *.wsdl;*.idl;*.rpc;*.ridl       interface   other
 measure  NBNC   *       *.json                          json        other
-measure  NBNC   *       *.po                            perl        other
 measure  NBNC   *       *.yml;*.yaml                    yaml        other
 measure  NBNC   *       *.dsp;*.sln                     build       other
-measure  NBNC   *       *.csproj;*.vcproj;*.vcxproj     build       other
+measure  NBNC   *       *.vcxproj.filters               build       other
 measure  NBNC   *       *.vdproj                        build       other
+measure  NBNC   *       *.nupkg                         build       other
 measure  NBNC   *       *.bpel                          bpel        other
+measure  NBNC   *       *.bat                           script      other
+measure  NBNC   *       *.cmd                           script      other
+measure  NBNC   *       *.sh                            script      other
+measure  NBNC   *       *.bash                          script      other
+measure  NBNC   *       *.ps1                           script      other
 measure  customDelphi * *.dfm                           delphi      other
-
+measure  NBNC   *       *.feature                       script      other   cucumber
+measure  NBNC   *       *.md                            help        other   markdown
+measure  NBNC   *       *.svd                           config      other
+measure  Document *     *.pdf;*.txt                     document    other
