@@ -33,13 +33,13 @@ class CodeSurveyorModules( object ):
         Return the csmodule class with the given name, if it exists
         '''
         csmodule = None
-        try:
-            csmodule = self.moduleList[self._csmod_hash(csmoduleName, options)]
-        except KeyError:
-            trace.config(2, "Loading csmodule: {0}".format(csmoduleName))
-            csmodule = self._load_csmodule(csmoduleName, options)
-            if csmodule is not None:
-                self.moduleList[self._csmod_hash(csmoduleName, options)] = csmodule
+        trace.config(2, "Loading csmodule: {0}".format(csmoduleName))
+        mod_hash = self._csmod_hash(csmoduleName, options)
+        if mod_hash in self.moduleList:
+            csmodule = self.moduleList[mod_hash]
+        csmodule = self._load_csmodule(csmoduleName, options)
+        if csmodule is not None:
+            self.moduleList[self._csmod_hash(csmoduleName, options)] = csmodule
         return csmodule
 
 

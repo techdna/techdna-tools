@@ -62,9 +62,9 @@ def is_noncode_ext(filePath):
 # because extension works well in most cases, and this is a more expensive
 # operation since we need to open the file
 NonCodeFileStart = [
-    '\x7ELF',           # Linux/Unif ELF exe (often don't have file extensions)
-    'PK\x03\x04',       # Many types of zipped file structure
-    '\x1F\x8B\x08',     # Gzip
+    b'\x7ELF',           # Linux/Unif ELF exe (often don't have file extensions)
+    b'PK\x03\x04',       # Many types of zipped file structure
+    b'\x1F\x8B\x08',     # Gzip
     ]
 def is_noncode_file(fileObject):
     maxWindowSize = 30
@@ -82,7 +82,7 @@ def is_noncode_file(fileObject):
 # TBD -- expose tuning parameters to config?
 def is_text_file(fileObject):
 
-    textChars = string.letters + string.digits + string.punctuation + string.whitespace
+    textChars = string.ascii_letters + string.digits + string.punctuation + string.whitespace
     bytesToCheck = 128          # Big enough window to grab, but small for speed
     startPoint = 4              # Skip start of file, for hidden text codes
     minWindowSize = 32          # Get a big enough min window to be feasible

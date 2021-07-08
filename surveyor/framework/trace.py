@@ -108,7 +108,10 @@ def _init():
         if MODE_TRACE in modes():
             sys.settrace(_python_trace_on)
         else:
-            sys.settrace(_python_trace_off)
+            if 'pydevd' in sys.modules:
+                sys.stdout.write("\n\nsettrace call skipped to allow use of Python debugger\n\n")
+            else:
+                sys.settrace(_python_trace_off)
     except:
         sys.stdout.write("\n\nsettrace call failed, no Python tracing available\n\n")
 
@@ -117,7 +120,7 @@ def _init():
 _traceMethods = set(['msg', 'file', 'config', 'cc',
         'code', 'notcode', 'search', 'temp', 'enum', 'traceback', ])
 def _add_debug_funcs():
-    for (key, value) in globals().iteritems():
+    for (key, value) in globals().items():
         if key in _traceMethods:
             globals()[key] = globals()["_"+key]
 
@@ -150,7 +153,7 @@ def _debug_trace(level, msg):
 
 def _debug_enum(level, obj):
     try:
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             _debug_write(level, "  " + str(key) + ": " + str(value))
     except AttributeError:
         for item in obj:

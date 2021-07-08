@@ -25,7 +25,7 @@ import sys
 import time
 import multiprocessing
 from errno import EACCES
-from Queue import Empty, Full
+from queue import Empty, Full
 
 from framework import fileext
 from framework import uistrings
@@ -40,9 +40,16 @@ OUT_PUT_TIMEOUT = 0.4
 
 #-------------------------------------------------------------------------
 # The following is required to support multi-processing with pyinstaller
-import multiprocessing.forking
+try:
+    # Python 3.4+
+    if sys.platform.startswith('win'):
+        import multiprocessing.popen_spawn_win32 as forking
+    else:
+        import multiprocessing.popen_fork as forking
+except ImportError:
+    import multiprocessing.forking as forking
 
-class _Popen(multiprocessing.forking.Popen):
+class _Popen(forking.Popen):
     def __init__(self, *args, **kw):
         if hasattr(sys, 'frozen'):
             # Have to set _MEIPASS2 to get --onefile and --onedir mode working.
@@ -96,12 +103,12 @@ class Worker( Process ):
             else:
                 self._run()
 
-        except Exception, e:
+        except Exception as e:
             self._controlQueue.put_nowait(('JOB', 'EXCEPTION', e))
             trace.traceback()
         except KeyboardInterrupt:
             trace.cc(1, "Ctrl-c occurred in job worker loop")
-        except Exception, e:
+        except Exception as e:
             trace.cc(1, "EXCEPTION occurred in job worker loop")
             self._controlQueue.put_nowait(('JOB', 'EXCEPTION', e))
             trace.traceback()
@@ -236,12 +243,12 @@ class Worker( Process ):
                         numFilesInFolder,
                         self.file_measured_callback)
 
-        except utils.FileMeasureError, e:
+        except utils.FileMeasureError as e:
             trace.traceback(2)
             self._currentFileErrors.append(
                     uistrings.STR_ErrorMeasuringFile.format(self._currentFilePath, str(e)))
             continueProcessing = not options.breakOnError
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             trace.traceback(2)
             if e.errno == EACCES:
                 self._currentFileErrors.append(

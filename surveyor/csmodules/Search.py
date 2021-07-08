@@ -41,7 +41,7 @@
 from framework import basemodule
 from framework import trace
 from framework import utils
-from searchMixin import _searchMixin
+from .searchMixin import _searchMixin
 
 
 class Search( _searchMixin, basemodule._BaseModule ):
@@ -126,7 +126,7 @@ class Search( _searchMixin, basemodule._BaseModule ):
                     analysisItem[ self.SEARCH_MATCH      ] = utils.get_match_string(match)[:self.MAX_STR_LEN]
                     analysis.append(analysisItem)
 
-        except Exception, e:
+        except Exception as e:
             raise utils.CsModuleException("Error {0}\n...searching line: {1}".format(
                     str(e), str(val_TotalLines)))
 

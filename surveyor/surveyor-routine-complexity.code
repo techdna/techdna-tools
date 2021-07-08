@@ -1,0 +1,86 @@
+#=============================================================================
+#   Surveyor 5 Config File for per-Routine Complexity
+#   Mike Kelly Consulting LLC
+#   May 2012
+#
+#
+#   Different sub-branches of the tree can be configured separetly by placing
+#   config files in them with the same name.
+#
+#
+#=============================================================================
+# Copyright 2008-2012, Matt Peloquin. This file is part of Code Surveyor,
+# covered under GNU GPL v3 and is distributed WITHOUT ANY WARRANTY.
+#=============================================================================
+
+# Constants can be defined
+# For example, _CODE_FILES_ defines a set of file extensions for use in config lines
+CONSTANT:_CODE_FILES_:*.cpp;*.java;*.cs;*.js;*.c;*.cxx;*.h;*.sql;*.C;*.rdl;*.wsdl;*.cmd;*.aspx;*.asmx;*.asax;*.rb;*.idl;
+
+
+#-------------------------------------------------------------------------
+#  Per-Routine Complexity Metrics
+#  Using the routines verb, metrics can be collected for routines in a
+#  file based on using RE expressions to detect starts of routines
+#  Depending on your language and coding style, this approach can provide
+#  very close per-routine metrics
+
+# Capture the various punctuation symbols that may be used in routine delcarations
+CONSTANT:_CHARS_:\.\[\]\&\*<>:
+
+# Captures most C# methods without false positives
+routines  Code  routine.*   *.cs     OUT:Complexity.csv
+    ^.*? (?:public|private|protected|static|internal) (?!\s+class|\s+struct|\s+sealed) ([\w \t_CHARS_]+) \s*\(
+    ^.*?void ([\w \t_CHARS_]+) \s*[\(\n]
+routines_end
+
+# Posgres-SQL
+routines  Code  routine.*   *.sql   OUT:Complexity.csv \
+OPT:DECISIONS:(\b(IF|ELSE|ELSIF|FOR|WHILE|DO)\b)
+    \s*CREATE FUNCTION\s+(\w+)
+    \s*CREATE OR REPLACE FUNCTION\s+(\w+)
+routines_end
+
+# Ruby
+routines  Code  routine.*   *.rb   OUT:Complexity.csv OPT:RUBY \
+OPT:DECISIONS:(\b(if|else|elsif|for|while|do|rescue|unless)\b)
+    \s*def\s+(\w+)
+routines_end
+
+# Python
+routines  Code  routine.*   *.py   OUT:Complexity.csv  OPT:PYTHON
+    \s*def\s+(\w+)
+routines_end
+
+# Capture most Java methods without false positives
+# Note that in this example we are overriding the Code.py default decision detection
+routines  Code  routine.*   *.java;*.js  OUT:Complexity.csv  \
+OPT:DECISIONS:(\b(if|else|for|while)\b)
+
+    ^.*? (?:public|private|protected|static|void|function) ([\w \t_CHARS_]+) \s*\(
+
+routines_end
+
+# Capture Objective-C methods
+routines  Code  routine.*   *.m;*.mm  OUT:Complexity.csv 
+    ^\s*[-+]\s*\(\w+\)\s*([\w \t_CHARS_]+)
+routines_end
+
+routines  Code  routine.*       *.cpp;*.cc;*.c;*.cxx    cpp        OUT:Complexity.csv  \
+OPT:DECISIONS:(\b(if|else|for|while|do|case)\b)
+  # Constructor and Destructors
+  ^\s*(\w+::[~\w]+)\s*\([^;]*$
+
+  # C++ method declaration with some modifiers on same lines as name
+  # Note the additional characters to capture templates and operators
+  ^[^=#]*?([\w<>]+\s+[\w<>]+::[\w<>:]+)\s*\([^;]*$
+
+  # C++ method declaration with modifiers on lines above name
+  ^\s*([\w<>]+::[\w<>:]+)\s*\([^;]*$
+
+  # C-style method definitions, without false positives of logic
+  ^[^-=+|#]*?([\w<>]+\s+(?!if|for|switch|while|catch|return)\w+)\s*\([^-;=+|]*$
+
+  # C-style methods with modifiers on the line above
+  #^(\s*(?!if|for|switch|while|catch|return)[\w<>]+)\s*\([^-;=+|&]*$
+routines_end

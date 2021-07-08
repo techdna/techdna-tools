@@ -9,7 +9,8 @@
 import os
 import sys
 import time
-
+import chardet
+import magic
 
 #-----------------------------------------------------------------------------
 #  OS Defaults we may want to make dynamic some day
@@ -17,6 +18,9 @@ import time
 CURRENT_FOLDER = '.'
 CONSOLE_CR = "\r"
 
+# Confidence from chardet that we'll accept on detecting an encoding
+# see open_chardet
+ENCODING_DETECTION_THRESHHOLD = 0.50
 
 #-----------------------------------------------------------------------------
 #  Exceptions
@@ -84,6 +88,48 @@ def safe_dict_get_float(dictionary, keyName):
     except Exception:
         return 0.0
 
+# In Python3 we have to implement our own magic autodetection
+# of binary/text and charsets
+def open_chardet(fpath):
+    my_magic = magic.Magic(mime=True, uncompress=True)
+    if not my_magic.from_file(fpath).startswith('text/'):
+        return open(fpath, 'rb')
+
+    # looks like text, use chardet to figure out encoding
+    fh = open(fpath, 'rb')
+    buf = fh.read(16 * 1024)
+    res = chardet.detect(buf)
+    # DEBUG - print(res)
+    fh.close()
+
+    # Search through detected encodings - they could be a single encoding or
+    # a list of dictionaries in
+    # this form: {'encoding': 'ascii', 'confidence': 1.0, 'language': ''}
+    # and find if any is detected with better than 90% confidence.  if not,
+    # open the file as binary
+    encoding_found = None
+    encoding_confidence = 0
+    if isinstance(res, list):
+        for encoding in res:
+            # Work through the encoding list,
+            # pick the one with the highest confidence score
+            # DEBUG print('Considering {0}'.format(encoding))
+            if encoding.get('confidence') >= encoding_confidence:
+                encoding_found = encoding.get('encoding')
+                encoding_confidence = encoding.get('confidence')
+    else:
+        encoding_found = res.get('encoding')
+        encoding_confidence = res.get('confidence')
+
+    # DEBUG print('Using {0}'.format(use_encoding))
+    if encoding_found is None or encoding_confidence < ENCODING_DETECTION_THRESHHOLD:
+        # chardet could not figure out encoding, or has very low confidence
+        # DEBUG - print('No encoding detected with confidence >= {0} - using binary'.format(ENCODING_DETECTION_THRESHHOLD))
+        fh = open(fpath, 'rb')
+    else:  # use encoding detected
+        # DEBUG - print('Encoding detected {0}'.format(enc))
+        fh = open(fpath, 'r', encoding=encoding_found, errors="surrogateescape")
+    return fh
 
 #-----------------------------------------------------------------------------
 # String and RE utils
@@ -106,7 +152,7 @@ def check_bytes_below_threshold(byteStr, chars, minWin, startPos, threshold):
     If the ratio of bytes not in chars is above the given threshold
     (within the startPos and minWin window size) return false
     '''
-    #print "Bytes: {0}".format(byteStr)
+    #DEBUG print "Bytes: {0}".format(byteStr)
     isBelowThreshold = True
     bytePos = 0
     badChars = 0
@@ -115,12 +161,19 @@ def check_bytes_below_threshold(byteStr, chars, minWin, startPos, threshold):
         bytePos += 1
         if bytePos < startPos:
             continue
+        if isinstance(char, int):
+            try:
+                char = chr(char)
+            except ValueError:
+                badChars += 1
+                break
         if not char in chars:
             badChars += 1
-            #print "byte: {0}".format(char)
+            #DEBUG print("check_bytes_below_threshold - binary char at {0}: {1}".format(bytePos, char))
         if bytePos >= minWin or bytePos == len(byteStr):
             badCharRatio = float(badChars)/float(bytePos)
             if badCharRatio > threshold:
+                #DEBUG print("check_bytes_below_threshold - badCharRatio {0} exceeds threshold of {1} - file is suspected as binary".format(badCharRatio,threshold))
                 isBelowThreshold = False
                 break
     return isBelowThreshold
@@ -144,10 +197,14 @@ def strip_null_chars(rawString):
     inserted into an Ascii string
     TBD -- make search UTF/Unicode aware
     '''
-    return rawString.replace('\00', '')
+    if isinstance(rawString, str):
+        return rawString.replace('\00', '')
+    else:
+        return rawString.replace(b'\00', b'')
 
 
-AnnoyingChars = ''.join([chr(byte) for byte in xrange(0, 31)])
+AnnoyingChars = ''.join([chr(byte) for byte in range(0, 31)])
+AnnoyingCharsTable=str.maketrans(AnnoyingChars, '_' * len(AnnoyingChars))
 def strip_annoying_chars(rawStr):
     '''
     Get rid of annoying characters that can mess up display
@@ -155,11 +212,11 @@ def strip_annoying_chars(rawStr):
     newStr = rawStr.rstrip()
     newStr = newStr.expandtabs(2)                   # Make tabs consistent and small
     newStr = newStr.replace('\n', ' <\n> ')         # Avoid embedded newlines
-    newStr = newStr.translate(None, AnnoyingChars)  # Beeps, linefeeds, etc.
+    newStr = newStr.translate(AnnoyingCharsTable)   # Beeps, linefeeds, etc.
     return  newStr
 
 
-ExtendedChars = ''.join([chr(byte) for byte in xrange(127, 255)])
+ExtendedChars = ''.join([chr(byte) for byte in range(127, 255)])
 def strip_extended_chars(rawStr):
     '''
     Get rid of binary characters
@@ -177,7 +234,7 @@ def safe_ascii_string(byteStr):
     try:
         return str(byteStr)
     except UnicodeEncodeError:
-        return str(unicode(byteStr).encode('unicode_escape'))
+        return str(str(byteStr).encode('unicode_escape'))
 
 
 def safe_utf8_string(byteStr):
@@ -188,10 +245,10 @@ def safe_utf8_string(byteStr):
     if byteStr is None:
         return ""
     try:
-        return unicode(byteStr, 'utf8', 'replace')
+        return str(byteStr, 'utf8', 'replace')
     except UnicodeEncodeError:
         ascii = str(byteStr).encode('string_escape')
-        return unicode(ascii)
+        return str(ascii)
 
 
 def fit_string(fullString, maxLen, replacement="...", tailLen=None):
@@ -210,7 +267,7 @@ def fit_string(fullString, maxLen, replacement="...", tailLen=None):
     return newString
 
 
-MAX_RANK = sys.maxint
+MAX_RANK = sys.maxsize
 def match_ranking_label(rankingMap, value):
     '''
     Match a ranking label to a value, based on list a of rankValue/name pairs

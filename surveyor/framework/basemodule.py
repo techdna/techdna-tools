@@ -20,7 +20,7 @@
         3. Place the completed file in the "csmodules" folder
         4. Module will load when requested in a config file.
 
-    See csmodules\NBNC.py for an example.
+    See csmodules\\NBNC.py for an example.
 '''
 #=============================================================================
 # Copyright 2004-2011, Matt Peloquin and Construx. This file is part of Code
@@ -149,12 +149,12 @@ class _BaseModule( object ):
             trace.config(2, "ConfigOpt:  {0}:{1}".format(optName, optValue))
             try:
                 configCode, _configHelp = self._configOptionDict[optName]
-            except KeyError, e:
+            except KeyError as e:
                 raise utils.CsModuleException("Invalid Config Option: {0}".format(str(e)))
             trace.config(3, "ConfigCode:  {0}".format(configCode))
             try:
                 exec(configCode)
-            except Exception, e:
+            except Exception as e:
                 trace.traceback()
                 raise utils.CsModuleException("Error executing Config Option: {0}".format(str(e)))
 
@@ -171,7 +171,7 @@ class _BaseModule( object ):
         self._writeEmptyMeasures = False
         self._deltaFilePath = None
         self._sizeThreshold = 0
-        self._ignoreBinary = False
+        self._ignoreBinary = True
         self._ignoreNonCode = False
         self._ignorePath = None
         self._deltaIncludeDeleted = False
@@ -263,7 +263,7 @@ class _BaseModule( object ):
         if self._survey(fileLines, configEntry, measurements, analysis):
 
             # Pack measurements that match our measure filter
-            for measureName, measure in measurements.iteritems():
+            for measureName, measure in measurements.items():
                 if self.match_measure(measureName, configEntry.measureFilters):
                     measureResults[measureName] = measure
 
@@ -271,7 +271,7 @@ class _BaseModule( object ):
             # We only send analysis items that match filter
             for analysisItem in analysis:
                 analysisRow = {}
-                for itemName, itemValue in analysisItem.iteritems():
+                for itemName, itemValue in analysisItem.items():
                     if self.match_measure(itemName, configEntry.measureFilters):
                         analysisRow[itemName] = itemValue
                 if analysisRow:
@@ -341,24 +341,23 @@ class _BaseModule( object ):
         elif self._sizeThreshold > 0:
             fileSize = utils.get_file_size(filePath)
             if self._sizeThreshold < fileSize:
-                trace.file(1, "Skipping, size {0}: {1}".format(fileSize, filePath))
+                trace.file(1, "Skipping, file too big {0:,} bytes: {1}".format(fileSize, filePath))
                 tryToOpen = False
 
         if tryToOpen:
             # Open the file if it hasn't been opened, otherwise reset it
             if not oldFileHandle:
-                # Use a universal open with line buffering to support binary files and
-                # reduce the cost of open on larger files
-                newFileHandle = open(filePath, 'rU', 1)
+                # open with automagic charset (or binary) detection - use default buffering
+                newFileHandle = utils.open_chardet(filePath)
             else:
                 newFileHandle = oldFileHandle
                 newFileHandle.seek(0)    # Reset the file
 
             # Do tests that look at start of the file
             keepFileOpen = False
-            if self._ignoreNonCode and filetype.is_noncode_file(newFileHandle):
+            if self._ignoreNonCode and ('b' in newFileHandle.mode or filetype.is_noncode_file(newFileHandle)):
                 trace.file(1, "Skipping, non-code start: {0}".format(filePath))
-            elif self._ignoreBinary and not filetype.is_text_file(newFileHandle):
+            elif self._ignoreBinary and ('b' in newFileHandle.mode or not filetype.is_text_file(newFileHandle)):
                 trace.file(1, "Skipping, binary char: {0}".format(filePath))
             else:
                 keepFileOpen = True
@@ -391,7 +390,7 @@ class _BaseModule( object ):
                 measureFileLines = fileToMeasure.readlines()
                 fileToMeasure.close()
                 deltaFileLines = None
-                with open(deltaFilePath, 'rU') as deltaFile:
+                with utils.open_chardet(deltaFilePath) as deltaFile:
                     deltaFileLines = deltaFile.readlines()
                 diffLines = difflib.unified_diff(deltaFileLines, measureFileLines)
                 if diffLines:
@@ -409,7 +408,7 @@ class _BaseModule( object ):
         '''
         If there are meta-data options selected, pack the data into fileData
         '''
-        for optKey, optValue in self._metaDataOpts.iteritems():
+        for optKey, optValue in self._metaDataOpts.items():
 
             if optKey in ('NAME'):
                 measures[METADATA_FILENAME] = self._currentPath.fileNameNoExt

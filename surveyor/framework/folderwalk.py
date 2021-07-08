@@ -52,6 +52,9 @@ class FolderWalker( object ):
             trace.file(2, "Scanning: {0}".format(folderName))
 
             numUnfilteredFiles = len(fileNames)
+            if numUnfilteredFiles == 0:
+                trace.file(1, "WARNING - No files in: {0}".format(folderName))
+
             filesAndConfigs = []
 
             if fileNames and self._valid_folder(folderName):
@@ -103,7 +106,7 @@ class FolderWalker( object ):
             _root, currentFolder = os.path.split(folderName)
             for folderPattern in self._skipFolders:
                 if fnmatch.fnmatch(currentFolder, folderPattern):
-                    trace.file(1, "Skiping folder: {0}".format(folderName))
+                    trace.file(1, "Skipping folder: {0}".format(folderName))
                     validFolder = False
                     break
 
@@ -193,7 +196,7 @@ class FolderWalker( object ):
         dirsToRemove = set(dirsToRemove)
 
         for folder in dirsToRemove:
-            trace.file(1, "Skiping over: {0}\\{1}".format(root, folder))
+            trace.file(1, "Skipping over: {0}\\{1}".format(root, folder))
             dirs.remove(folder)
 
 

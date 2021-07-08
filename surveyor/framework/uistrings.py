@@ -109,8 +109,8 @@ STR_ErrorConfigDupeMeasures = """
 #   Command Line App UI Strings
 
 STR_Intro = """
-Code Surveyor 6
-Copyright 2012, GPL (-? for help)
+Code Surveyor 6.1
+Copyright 2012, GPL v3 (-? for help)
 """
 STR_Divider = "\n"
 STR_FolderMeasured = " Measuring: {0}\n"
@@ -121,7 +121,7 @@ STR_IncludeFolders = " Including folders: {0}\n"
 STR_LocationOfMeasurements = " Output location: {0}\n"
 STR_CmdArgs = " Cmdline: {0}\n"
 
-STR_UpdateDisplay = "({0:.0f}) Files found : in queue : measured -- {1:n} : {2:n} : {3:n}"
+STR_UpdateDisplay = "({0:.0f}) Files found : in queue : measured -- {1:,} : {2:,} : {3:,}"
 STR_UpdatePath = " {0:75}\n"
 STR_UpdatePathDetailed = " ({0:0.3f}) {1:60}\n"
 
@@ -145,21 +145,21 @@ STR_ErrorList = """
 
 
 """
-STR_SummaryTotalFiles = """ Total files:   {1:n}
- Total folders: {0:n}
+STR_SummaryTotalFiles = """ Total files:   {1:,}
+ Total folders: {0:,}
  """
 STR_SummaryFiltered = """
- Files filtered: {0:n}
-      processed: {1:n}
-        skipped: {2:n}
+ Files filtered: {0:,}
+      processed: {1:,}
+        skipped: {2:,}
  """
 STR_SummaryMeasured = """
- Folders measured: {0:n}
- Files measured:   {1:n}
- Measure rows:     {2:n}
+ Folders measured: {0:,}
+ Files measured:   {1:,}
+ Measure rows:     {2:,}
 """
 STR_SummaryLargeFile = """
- Files larger than {0:n} bytes will have empty measures
+ Files larger than {0:,} bytes will have empty measures
  """
 STR_SummaryBinaryFile = """
  Probable binary files will have empty measures
@@ -184,7 +184,7 @@ STR_AggregateKeyError = """
 STR_AggregateThresholdKeyError = """
  The aggregate threshold key is not in the aggregates: {0}
 """
-STR_SummaryDetailedMeasureValue = "   {0}{1}  {2:n}\n"
+STR_SummaryDetailedMeasureValue = "   {0}{1}  {2:,}\n"
 STR_SummaryDetailedMeasure =      "   {0}{1}\n"
 STR_SummaryRunTime = "\nRun time: {0:.1f} seconds\n"
 
@@ -383,6 +383,7 @@ STR_HelpText_Scan_All = """
 """
 
 CMDARG_SKIP_DIR = 'd'
+CMDARG_SKIP_EMPTY = 'e'
 CMDARG_SKIP_FILE = 'f'
 CMDARG_SKIP_SIZE = 's'
 CMDARG_SKIP_BINARY = 'b'
@@ -392,6 +393,7 @@ STR_HelpText_Skip = """
 
     -sn             Do not measure files with common non-code extensions
     -sd <folders>   Skip folders that match <folders>
+    -se             Don't warn about empty top-level directories, just skip them
     -sf <files>     Skip files that match filters in <files>
     -sbinary        Attempt to identify and skip binary files
     -ssize [bytes]  Do not measure files larger than [bytes]
@@ -477,7 +479,7 @@ STR_HelpText_Results = """
     -r paragraph    Uses paragraph symbol to separarte*
     -r xml          XML output for values
 
-    *on windows hold down "Alt" and type "0182" for \\xB6 paragraph symbol "¶"
+    *on windows hold down "Alt" and type "0182" for \\xB6 paragraph symbol "ï¿½"
 """
 
 CMDARG_METADATA_RESET = 'r'

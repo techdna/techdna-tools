@@ -14,7 +14,7 @@
 #=============================================================================
 import re
 import string
-from Code import Code
+from .Code import Code
 from framework import utils
 
 class customPowerBuilder( Code ):
@@ -196,7 +196,7 @@ class customPowerBuilder( Code ):
         measurements["file.pbGenLines"] = sum(self.counts['PbGenLines'])
 
         if self.createOutFiles:
-            for fileObj in self._outFiles.itervalues():
+            for fileObj in self._outFiles.values():
                 try:
                     fileObj.close()
                 except Exception:

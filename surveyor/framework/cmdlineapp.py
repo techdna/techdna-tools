@@ -178,10 +178,10 @@ class SurveyorCmdLine( object ):
                 else:
                     self._execute_job()
                 success = not self._errorList
-            except KeyboardInterrupt, e:
+            except KeyboardInterrupt as e:
                 self._keyboardInterrupt = e
-            except Exception, e:
-                self._finalException = e
+            except Exception as e:
+                self._finalException = sys.exc_info()
             finally:
                 self._display_summary()
                 self._cleanup()
@@ -216,7 +216,7 @@ class SurveyorCmdLine( object ):
             helpText = self._args.parse_args()
         except KeyboardInterrupt:
             self._keyboardInterrupt()
-        except Exception, e:
+        except Exception as e:
             trace.traceback()
             helpText = STR_HelpText_Usage
             if len(e.args):
@@ -282,14 +282,11 @@ class SurveyorCmdLine( object ):
         if self._keyboardInterrupt is not None:
             self._print(STR_UserInterrupt)
         if self._finalException is not None:
+            import traceback
             # We don't use our tracing or print output here
             self._out.write(STR_Error)
-            if not isinstance(self._finalException, utils.SurveyorException):
-                self._out.write(str(type(self._finalException)) + "\n")
-            self._out.write(str(self._finalException) + "\n")
-            if trace.level() >= 1:
-                import traceback
-                self._out.write(traceback.format_exc())
+            self._out.write(''.join(traceback.format_exception(*self._finalException)))
+
 
 
     #-----------------------------------------------------------------------------
@@ -309,7 +306,7 @@ class SurveyorCmdLine( object ):
         fileMeasured = False
         for measures, analysisResults in outputList:
             trace.file(2, "Callback: {0} -- {1}".format(filePath, measures))
-            if measures.items():
+            if list(measures.items()):
                 # Zero out dupe measures in place
                 if self._dupeTracking:
                     self._filter_dupes(filePath, measures, analysisResults)
@@ -352,12 +349,12 @@ class SurveyorCmdLine( object ):
         the break-down on per-file type
         '''
         itemsToStash = []
-        itemsToStash.extend(measures.items())
+        itemsToStash.extend(list(measures.items()))
         # For detailed or higher trace levels, show everything we collected except exclusions
         # Otherwise show only key summary items
         if self._detailed or trace.level() > 1:
             for analysis in analysisItems:
-                itemsToStash.extend(analysis.items())
+                itemsToStash.extend(list(analysis.items()))
             itemsToStash = [(n, v) for n, v in itemsToStash if
                     True not in [n.startswith(prefix) for prefix in self.SummaryPrefixToExclude]]
         else:
@@ -420,7 +417,7 @@ class SurveyorCmdLine( object ):
             # Delete in place measures not defined in DupeMeasureOutput
             # The numbers are stripped as convienence for Dir1, Dir2, etc.
             dupeMeasures = dict(
-                    (k, v) for k, v in measures.iteritems()
+                    (k, v) for k, v in measures.items()
                         if k.rstrip('0123456789') in self.DupeMeasureOutput)
             measures.clear()
             measures.update(dupeMeasures)
@@ -451,7 +448,7 @@ class SurveyorCmdLine( object ):
             dupeKey = (measures[basemodule.METADATA_FULLNAME] +
                         measures[basemodule.METADATA_CONFIG].replace(' ', ''))
             if dupeKey in self._dupeFileSurveys:
-                for dupeFileSize, (fileCount, firstFilePath) in self._dupeFileSurveys[dupeKey].iteritems():
+                for dupeFileSize, (fileCount, firstFilePath) in self._dupeFileSurveys[dupeKey].items():
                     if (dupeFileSize - self._dupeThreshold) <= fileSize and (
                             fileSize <= (dupeFileSize + self._dupeThreshold)):
                         firstDupeFilePath = firstFilePath
@@ -502,7 +499,7 @@ class SurveyorCmdLine( object ):
         '''
         # For each set of aggregates we go through results and add
         # them to the appropriate aggregate set
-        for aggKey, aggNames in self._aggregateNames.iteritems():
+        for aggKey, aggNames in self._aggregateNames.items():
             aggregateDict = self._aggregates.setdefault(aggKey, {})
             trace.file(2, "Aggregating {0} items in {1}".format(len(analysisResults), aggKey))
             for result in analysisResults:
@@ -510,16 +507,16 @@ class SurveyorCmdLine( object ):
                 # will be keying the aggreate dictionary on
                 try:
                     newKey = result[aggKey]
-                except KeyError, e:
+                except KeyError as e:
                     raise utils.InputException(STR_AggregateKeyError.format(str(e)))
                 else:
                     aggregate = aggregateDict.setdefault(newKey, {'aggregate.count':0})
 
                     # Sepcific names can be provided to aggregate, or can do all
                     namesToAggregate = aggNames
-                    if isinstance(aggNames, basestring):
+                    if isinstance(aggNames, str):
                         if aggNames == 'all':
-                            namesToAggregate = result.keys()
+                            namesToAggregate = list(result.keys())
 
                     # Take each value from the result and aggregate according to type
                     for itemName in namesToAggregate:
@@ -557,7 +554,7 @@ class SurveyorCmdLine( object ):
         # Dicts are opened and updated recursively
         elif isinstance(item, dict):
             currentDict = aggregate.get(itemName, {})
-            for key, value in item.iteritems():
+            for key, value in item.items():
                 self._aggregate_update(key, value, currentDict)
             aggregate[itemName] = currentDict
 
@@ -572,16 +569,16 @@ class SurveyorCmdLine( object ):
         that exceed threshold.
         HACK - We use the output writer by creating a dummy OUT file tag
         '''
-        for keyName in self._aggregateNames.keys():
+        for keyName in list(self._aggregateNames.keys()):
             fileName = str(keyName).replace('.', '')
             hackOutTagMeasure = {'tag_write_aggregates': 'OUT:' + fileName}
             analysisRows = []
-            for valueRow in self._aggregates[keyName].values():
+            for valueRow in list(self._aggregates[keyName].values()):
                 writeRow = self._aggregateThresholdKey is None
                 if not writeRow:
                     try:
                         writeRow = valueRow[self._aggregateThresholdKey] > self._aggregateThreshold
-                    except KeyError, e:
+                    except KeyError as e:
                         raise utils.InputException(STR_AggregateThresholdKeyError.format(str(e)))
                 if writeRow:
                     analysisRows.append(valueRow)
@@ -617,7 +614,7 @@ class SurveyorCmdLine( object ):
         Used to create the in-place updating on the console by resetting
         the cursor each time, and blanking the text if requested
         '''
-        if not isinstance(message, basestring):
+        if not isinstance(message, str):
             message = str(message)
 
         clearCurrentLine = False
@@ -758,7 +755,7 @@ class SurveyorCmdLine( object ):
         # We display the measurements in alphabetical order
         # In verbose mode we may break out each measure by file type,
         # in which case we sort by size
-        measureNames = self._totals.keys()
+        measureNames = list(self._totals.keys())
         if measureNames:
             if self._detailed:
                 self._print(STR_SummaryDetailedFileTitle.format(
@@ -777,9 +774,9 @@ class SurveyorCmdLine( object ):
     def _get_dupe_counts(self):
         dupeFiles = 0
         totalDupes = 0
-        for _k, v in self._dupeFileSurveys.iteritems():
+        for _k, v in self._dupeFileSurveys.items():
             if isinstance(v, dict):
-                for _sizeBucket, (fileCount, _firstFile) in v.iteritems():
+                for _sizeBucket, (fileCount, _firstFile) in v.items():
                     if fileCount > 1:
                         dupeFiles += 1
                         totalDupes += fileCount
@@ -796,11 +793,11 @@ class SurveyorCmdLine( object ):
         for measureName in measureNames:
             # Create new dict for this measure, keyed on size
             sizeMeasures = {}
-            for (fileType, measureTotal) in self._totals[measureName].iteritems():
+            for (fileType, measureTotal) in self._totals[measureName].items():
                 sizeMeasures[measureTotal] = STR_SummaryDetailedMeasureValue.format(
                         str(measureName), str(fileType), measureTotal)
             # Display the measurement totals, in descending order
-            sortedSizes = sizeMeasures.keys()
+            sortedSizes = list(sizeMeasures.keys())
             sortedSizes.sort(reverse=True)
             for size in sortedSizes[:(self._detailedPrintSummaryMax + 1)]:
                 self._print(str(sizeMeasures[size]))
@@ -814,7 +811,7 @@ class SurveyorCmdLine( object ):
             try:
                 import pstats
             except ImportError:
-                print "\nError importing pstats, profile info cannot be displayed\n"
+                print("\nError importing pstats, profile info cannot be displayed\n")
             else:
                 try:
                     # Load either data for all threads, or only for one if filtered
@@ -823,20 +820,20 @@ class SurveyorCmdLine( object ):
                         p = pstats.Stats(PROFILE_FILE + "Main")
                         p.add(PROFILE_FILE + "Out")
                         if self._job is not None:
-                            for jobNum in xrange(self._job._workers.num_started()):
+                            for jobNum in range(self._job._workers.num_started()):
                                 p.add(PROFILE_FILE + "Job" + str(jobNum+1))
                     else:
                         p = pstats.Stats(PROFILE_FILE + self._profileThreadFilter)
 
                     p.strip_dirs()
                     p.sort_stats('time')
-                    print self._profileNameFilter
+                    print(self._profileNameFilter)
 
                     # Display output for stats, callers, callees
                     p.print_stats(self._profileCalls, self._profileNameFilter)
                     p.print_callers(self._profileCalledBy, self._profileNameFilter)
                     p.print_callees(self._profileCalled, self._profileNameFilter)
-                except Exception, e:
-                    print "\nError displaying profile data: \n", e
+                except Exception as e:
+                    print("\nError displaying profile data: \n", e)
 
 

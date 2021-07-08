@@ -12,7 +12,7 @@
 import os
 import time
 import multiprocessing
-from Queue import Empty, Full
+from queue import Empty, Full
 
 from framework import jobworker
 from framework import jobout
@@ -61,6 +61,7 @@ class Options( object ):
         self.numWorkers = DEFAULT_NUM_WORKERS
         self.breakOnError = False
         self.configInfoOnly = False
+        self.ignoreEmptyDirs = False
         self.profileName = None
 
 
@@ -134,12 +135,23 @@ class Job( object ):
         into one or more WorkPackages to send to jobs. At this point files have already
         been filtered against both job options and the config items.
         '''
+        trace.cc(2,"add_folder_files for {0} - {1} ({2} files)".format(currentDir, deltaPath, numUnfilteredFiles))
         self.numFolders += 1
         self.numUnfilteredFiles += numUnfilteredFiles
         self._filesSinceLastSend += numUnfilteredFiles
         self.numFilteredFiles += len(filesAndConfigs)
         if self._options.configInfoOnly:
             self._config_info_display(currentDir, filesAndConfigs)
+        elif not self._options.ignoreEmptyDirs and numUnfilteredFiles == 0:
+            '''
+            Warn about top-level directories that are empty - if there is no
+            OS path separator in the sub-path returned by split, this is a top-level
+            directory
+            Suppressed if -se (skip warning on empty dirs) passed on command line
+            '''
+            (head, tail) = os.path.split(currentDir)
+            if head.find(os.path.sep) == -1:
+                self._status_callback("** WARNING ** the top-level folder " + currentDir + " is EMPTY")
         else:
             self._put_files_in_queue(currentDir, deltaPath, filesAndConfigs)
             self._status_callback()
@@ -155,7 +167,8 @@ class Job( object ):
             self._wait_output_finish()
         except KeyboardInterrupt:
             self._keyboardInterrupt()
-        except Exception, e:
+        except Exception as e:
+            trace.msg(1, str(e))
             self._exception(e)
         finally:
             self._wait_then_exit()
@@ -261,7 +274,7 @@ class Job( object ):
             # jobs. Profiling shows it is not worth caching this
             try:
                 fileSize = utils.get_file_size(os.path.join(path, fileName))
-            except Exception, e:
+            except Exception as e:
                 # It is possible (at least in Windows) for a fileName to exist
                 # in the file system but be invalid for Windows calls. This is
                 # the first place we try to access the file through the file
@@ -297,9 +310,9 @@ class Job( object ):
         self._workers.start_next()
         trace.cc(2, "PUT WorkPackage - files: {0}, bytes: {1}...".format(
                 self._workPackage.size_items(), self._workPackage.size_bytes()))
-        trace.cc(4, self._workPackage.items())
+        trace.cc(4, list(self._workPackage.items()))
         try:
-            self._taskQueue.put(self._workPackage.items(), True, TASK_FULL_TIMEOUT)
+            self._taskQueue.put(list(self._workPackage.items()), True, TASK_FULL_TIMEOUT)
         except Full:
             raise utils.JobException("FATAL ERROR -- FULL TASK QUEUE")
         else:
@@ -412,7 +425,7 @@ class Job( object ):
             self._workers = [
                     jobworker.Worker(inQueue, outQueue, controlQueue,
                             dbgContext, str(num+1))
-                    for num in xrange(numWorkers) ]
+                    for num in range(numWorkers) ]
             self._workerStartIter = self()
             self._workerStartDone = False
             self._startedWorkers = 0
@@ -422,7 +435,7 @@ class Job( object ):
         def start_next(self):
             if not self._workerStartDone:
                 try:
-                    self._workerStartIter.next().start()
+                    next(self._workerStartIter).start()
                     self._startedWorkers += 1
                     return True
                 except StopIteration:

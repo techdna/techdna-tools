@@ -117,7 +117,7 @@ class _searchMixin( object ):
     # Internal implementation
 
     def _find_positive_match(self, searchTarget, positiveSearches):
-        for posString, (posRegExp, posCount) in positiveSearches.iteritems():
+        for posString, (posRegExp, posCount) in positiveSearches.items():
             if trace.level(): trace.search(3, "  PositiveCheck: {0} > {1}".format(
                                            searchTarget, posRegExp.pattern))
 
@@ -133,7 +133,7 @@ class _searchMixin( object ):
 
 
     def _is_negative_match(self, searchTarget, negativeSearches):
-        for negString, (negRegExp, negCount) in negativeSearches.iteritems():
+        for negString, (negRegExp, negCount) in negativeSearches.items():
             if trace.level(): trace.search(2, "  NegativeCheck: {0} > {1}".format(
                                             negRegExp.pattern, searchTarget))
 

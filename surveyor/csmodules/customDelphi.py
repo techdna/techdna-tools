@@ -7,7 +7,7 @@
 # Surveyor, covered under GNU GPL v3 and is distributed WITHOUT ANY WARRANTY.
 #=============================================================================
 import re
-from Code import Code
+from .Code import Code
 
 class customDelphi( Code ):
     '''

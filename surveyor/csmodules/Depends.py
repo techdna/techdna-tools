@@ -9,7 +9,7 @@
 # Copyright 2004-2010, Matt Peloquin and Construx. This file is part of Code
 # Surveyor, covered under GNU GPL v3 and is distributed WITHOUT ANY WARRANTY.
 #=============================================================================
-from Code import Code
+from .Code import Code
 
 from framework import utils
 
@@ -60,7 +60,7 @@ class Depends( Code ):
         Write out an entry for each include/import statement
         To ensure repeatability and easier readability, sort results
         '''
-        depends = sorted(self._fileDepends.iteritems(), key=lambda(k,v):str(k).lower())
+        depends = sorted(iter(self._fileDepends.items()), key=lambda k_v:str(k_v[0]).lower())
 
         for usingStatement, lineNums in depends:
             newDepends = {}

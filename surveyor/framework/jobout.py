@@ -7,12 +7,12 @@
 # Surveyor, covered under GNU GPL v3 and is distributed WITHOUT ANY WARRANTY.
 #=============================================================================
 import time
-import thread
+import _thread
 import threading
-from Queue import Empty, Full
+from queue import Empty, Full
 
 from framework import trace
-import utils
+from . import utils
 
 OUTPUT_EMPTY_WAIT = 0.02
 CONTROL_QUEUE_TIMEOUT = 0.1
@@ -55,8 +55,8 @@ class OutThread( threading.Thread ):
 
         except KeyboardInterrupt:
             trace.cc(1, "Ctrl-c occurred in OUTPUT THREAD")
-            thread.interrupt_main()
-        except Exception, e:
+            _thread.interrupt_main()
+        except Exception as e:
             trace.cc(1, "EXCEPTION occurred while processing output queue")
             self._controlQueue.put_nowait(('JOB', 'EXCEPTION', e))
             trace.traceback(2)

@@ -12,7 +12,7 @@
 import binascii
 
 from framework import utils
-from Code import Code
+from .Code import Code
 
 
 class DupeLines( Code ):
@@ -47,7 +47,7 @@ class DupeLines( Code ):
         '''
         lineNum = sum(self.counts['RawLines'])
         strippedLine = ' '.join(line.split())
-        lineCrc = binascii.crc32(strippedLine)
+        lineCrc = binascii.crc32(strippedLine.encode('utf8', errors="surrogateescape"))
 
         # adler32 is faster, but has too many collisions with short strings
         #lineCrc = zlib.adler32(strippedLine)
@@ -66,7 +66,7 @@ class DupeLines( Code ):
         '''
         # To ensure repeatability and easier readability, sort all our dupe lines
         # by the content of the line
-        dupeLines = sorted(self._linesCrc.iteritems(), key=lambda(k,v):str(v[0]).lower())
+        dupeLines = sorted(iter(self._linesCrc.items()), key=lambda k_v:str(k_v[1][0]).lower())
 
         for lineCrc, (dupeLine, lineNums) in dupeLines:
             newDupes = {}

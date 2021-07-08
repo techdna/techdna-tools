@@ -11,6 +11,7 @@
 import os
 import sys
 import csv
+import random
 import shutil
 import string
 import errno
@@ -77,7 +78,7 @@ class MeasureWriter( object ):
         return self._defFileName == 'stdout'
 
     def close_files(self):
-        for fileName in self._outputFiles.keys():
+        for fileName in list(self._outputFiles.keys()):
             self._close(fileName, self._outputFiles[fileName])
             del self._outputFiles[fileName]
 
@@ -117,10 +118,10 @@ class MeasureWriter( object ):
                 fileName = self._defFileName
             else:
                 fileName = self._get_output_filename(measures)
-                if not self._outputFiles.has_key(fileName):
+                if fileName not in self._outputFiles:
                     self._outputFiles[fileName] = self._open_file(fileName)
                     isNewFile = True
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.EACCES:
                 raise utils.OutputException(uistrings.STR_ErrorOpeningOutputAccess.format(fileName))
             else:
@@ -138,7 +139,7 @@ class MeasureWriter( object ):
         # We only try to open a new file if we have an output path
         # If we don't it means output was overrdiden and set up during open
         if not self._ignoreMetaOutfiles:
-            for itemName, itemValue in measures.iteritems():
+            for itemName, itemValue in measures.items():
                 if configentry.is_tag_name(itemName):
                     fileName = configentry.filename_from_tag(itemValue)
                     if fileName is not None:
@@ -247,7 +248,7 @@ class Delimited( MeasureWriter ):
     def _open_file(self, fileName):
         MeasureWriter._open_file(self, fileName)
         filePath = os.path.join(self._outDir, fileName)
-        self._rawFiles[fileName] = file(filePath, 'wb')
+        self._rawFiles[fileName] = open(filePath, 'w')
         outWriter = csv.writer(
             self._rawFiles[fileName], delimiter=self._delimiter, quoting=csv.QUOTE_NONNUMERIC)
         trace.file(2, "Opened Delimited Output File: {0}".format(filePath))
@@ -258,14 +259,18 @@ class Delimited( MeasureWriter ):
         if self._colMeasureIsDirty[fileName]:
             self._fixup_column_headers(fileName)
 
-    def _write_row(self, outputFile, listOfValues):
-        self._write_delimited_string(outputFile, listOfValues)
-
     def _write_delimited_string(self, outputFile, listOfValues):
         try:
             outputFile.writerow(listOfValues)
         except AttributeError:
             outputFile.write(self._delimiter.join(listOfValues) + NEW_LINE)
+        except UnicodeEncodeError:
+            def _asciify(str):
+                ascii_str = ascii(str)
+                if ascii_str.startswith("'") and ascii_str.endswith("'"):
+                    ascii_str = ascii_str[1:-1]
+                return ascii_str
+            outputFile.writerow(list(map(_asciify, listOfValues)))
 
     #-----------------------------------------------------------------------------
     #  Column methods
@@ -276,7 +281,7 @@ class Delimited( MeasureWriter ):
         our column index dictionary once at the start of each file using 
         the first row items and an order list if provided
         '''
-        itemNames = [itemName for itemName, _itemValue in firstRow.iteritems()]
+        itemNames = [itemName for itemName, _itemValue in firstRow.items()]
 
         # Split itemNames into two lists of anything that is in our predefined
         # order list, and anything that is not
@@ -308,7 +313,7 @@ class Delimited( MeasureWriter ):
         and add any new ones at then end.
         '''
         rowItems = []
-        for itemName, itemValue in outputItems.iteritems():
+        for itemName, itemValue in outputItems.items():
             rowItems.append([itemName, utils.safe_ascii_string(itemValue)])
 
         # Create dict of output values, keyed on the linear position of the
@@ -343,7 +348,7 @@ class Delimited( MeasureWriter ):
         column position for value
         '''
         outColNames = [''] * len(self._colMeasureTracker[filename])
-        for (colNameKey, colPosValue) in self._colMeasureTracker[filename].iteritems():
+        for (colNameKey, colPosValue) in self._colMeasureTracker[filename].items():
             outColNames[colPosValue] = colNameKey
         return outColNames
 
@@ -360,17 +365,17 @@ class Delimited( MeasureWriter ):
         in the same place as the outfile
         '''
         ValidChars = string.ascii_letters + string.digits
-        randomLetters = ''.join([char for char in os.urandom(16) if (char in ValidChars)])
+        randomLetters = ''.join(random.choices(ValidChars, k=16))
         tmpFileName = "_surveyor_tmp{0}_{1}".format(randomLetters, filename)
         tempPath = os.path.join(self._outDir, tmpFileName )
         trace.msg(1, "Fixing output headers: {0} ==> {1}".format(tmpFileName, filename))
 
         rowList = self._col_create_names_from_keys(filename)
-        tempFile = file(tempPath, 'wb')
-        self._write_row(tempFile, rowList)
+        tempFile = open(tempPath, 'w')
+        self._write_delimited_string(tempFile, rowList)
 
         oldPath = os.path.join(self._outDir, filename)
-        oldFile = file(oldPath, 'rb')
+        oldFile = open(oldPath, 'r')
         _ = oldFile.readline()
         for line in oldFile:
             tempFile.write(line)
@@ -398,14 +403,14 @@ class Xml( MeasureWriter ):
 
         # Create the file element
         fileNode = minidom.Element("file")
-        for itemName, itemValue in measures.iteritems():
+        for itemName, itemValue in measures.items():
             fileNode.setAttribute(itemName, utils.safe_ascii_string(itemValue))
 
         # Create unique analysisResults entries
         itemNum = 1
         for item in analysisResults:
             itemNode = minidom.Element("item" + str(itemNum))
-            for itemName, itemValue in item.iteritems():
+            for itemName, itemValue in item.items():
                 itemNode.setAttribute(itemName, utils.safe_ascii_string(itemValue))
             itemNum += 1
             fileNode.appendChild(itemNode)
@@ -416,7 +421,7 @@ class Xml( MeasureWriter ):
     def _open_file(self, filename):
         MeasureWriter._open_file(self, filename)
         filePath = os.path.join(self._outDir, filename)
-        outFile = file(filePath, 'w')
+        outFile = open(filePath, 'w')
         doc = minidom.Document()
         outFile.write(doc.toprettyxml())
         trace.file(2, "Opened XML Output File: {0}".format(filePath))

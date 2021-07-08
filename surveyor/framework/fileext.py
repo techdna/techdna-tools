@@ -38,7 +38,7 @@ _FilterCache = {}
 # is being run on windows and pointed at a posix file system -- but
 # Python lib fnmatch which uses os.path.normcase has same issue.
 RE_OPTIONS = 0
-if os.name in ['nt', 'os2']:
+if os.name in ['nt', 'os2', 'posix']:
     RE_OPTIONS = re.IGNORECASE
 
 

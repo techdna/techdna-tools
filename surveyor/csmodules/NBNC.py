@@ -329,7 +329,7 @@ self.reMultiLineCommentsClose = re.compile('=end', self._reFlags)''',
                     self._measure_line(line, onCommentLine)
                     self._analyze_line(line, analysis, onCommentLine)
 
-            except Exception, e:
+            except Exception as e:
                 trace.traceback()
                 raise utils.FileMeasureError(
                         "Problem processing line: {0} with module: {1}\n{2}".format(

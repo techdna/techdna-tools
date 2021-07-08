@@ -68,12 +68,12 @@ class ConfigReader( object ):
             trace.config(2, "Finsihed reading config file: {0}".format(filePath))
             trace.config(3, configEntries)
             return configEntries
-        except Exception, e:
+        except Exception as e:
             raise utils.ConfigError(uistrings.STR_ErrorConfigFile.format(filePath, str(e)))
 
 
     def _read_file(self, filePath, configEntries):
-        with open(filePath, 'r') as configFile:
+        with open(filePath, 'r', errors="surrogateescape") as configFile:
             return self._parse_file(configFile, configEntries)
 
 
@@ -100,7 +100,7 @@ class ConfigReader( object ):
                 trace.config(4, "ignoreBlock")
                 try:
                     while not self.ignoreStop.match(line):
-                        line = configFile.next()
+                        line = next(configFile)
                         trace.config(4, "Config ignore: {0}".format(line))
                 except Exception:
                     trace.config(4, "Exception while seeking end of ignore block")
@@ -147,7 +147,7 @@ class ConfigReader( object ):
                 contLineMatch = self.continuedLine.match(line)
                 if contLineMatch:
                     fullLine += contLineMatch.group(CONT_LINE_START)
-                    line = configFile.next().strip()
+                    line = next(configFile).strip()
                     trace.config(3, "FullLine: {0}".format(line))
                 else:
                     fullLine += line
@@ -179,7 +179,7 @@ class ConfigReader( object ):
                     configEntry.paramsProcessed.append(paramTuple)
                     trace.config(2, "LoadedParam: {0} => {1}".format(
                             configEntry.module.__class__.__name__, paramTuple))
-                except Exception, e:
+                except Exception as e:
                     trace.traceback()
                     raise utils.ConfigError(uistrings.STR_ErrorConfigParam.format(
                             str(configEntry), rawLine, str(e)))
@@ -201,7 +201,7 @@ class ConfigReader( object ):
                     if not readingVerbs:
                         configEntries.append(configEntry)
 
-                except Exception, e:
+                except Exception as e:
                     trace.traceback()
                     raise utils.ConfigError(uistrings.STR_ErrorConfigEntry.format(
                             rawLine, str(e)))
@@ -217,7 +217,7 @@ class ConfigReader( object ):
         else:
             try:
                 self._validate_entries(configEntries)
-            except Exception, e:
+            except Exception as e:
                 trace.traceback()
                 raise utils.ConfigError(uistrings.STR_ErrorConfigValidate.format(str(e)))
 
@@ -236,7 +236,7 @@ class ConfigReader( object ):
                         MAX_CONSTANT_REPLACE, line))
 
             oldLine = line
-            for constantMatch, constantValue in constants.iteritems():
+            for constantMatch, constantValue in constants.items():
                 if not constantValue is None:
                     line = line.replace(
                             constantMatch, constantValue, MAX_CONSTANT_REPLACE)

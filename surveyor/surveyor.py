@@ -1,4 +1,4 @@
-#!/usr/bin/env python 2.7
+#!/usr/bin/env python3
 #=============================================================================
 '''
     Code Surveyor command line application
@@ -55,14 +55,14 @@ if __name__ == '__main__':
         if cmdlineapp.run_job(sys.argv, sys.stdout, printWidth):
             result = SUCCESS
     except:
-        print "\nA system error occurred while running Surveyor:\n"
+        print("\nA system error occurred while running Surveyor:\n")
         traceback.print_exc()
     finally:
         # We should not have child processes alive at this point, but in
         # case there was a problem, kill them to prevent hangs
         for child in multiprocessing.active_children():
             child.terminate()
-            print "BAD EXIT -- {0} active".format(child.name)
+            print("BAD EXIT -- {0} active".format(child.name))
         sys.exit(result)
 
 

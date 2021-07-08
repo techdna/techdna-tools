@@ -13,8 +13,8 @@ import zlib
 from framework import utils
 from framework import trace
 from framework import basemodule
-from NBNC import NBNC
-from searchMixin import _searchMixin
+from .NBNC import NBNC
+from .searchMixin import _searchMixin
 
 
 class Code( _searchMixin, NBNC ):
@@ -295,7 +295,7 @@ class Code( _searchMixin, NBNC ):
                             self._reFlags),
                     None ],
                 [   re.compile( r'''
-                            generated \b [^\.]*? \b ( with | date | time |
+                            generated \b [^\.]*? \b ( by | with | date | time |
                                     code | file | class | script | source ) \b .* $
                             ''', self._reFlags),
                     None ],
@@ -491,7 +491,7 @@ class Code( _searchMixin, NBNC ):
         '''
         Create a file CRC based on the raw lines
         '''
-        self._fileCrc = zlib.adler32(rawLine, self._fileCrc)
+        self._fileCrc = zlib.adler32(bytearray(rawLine, 'utf8', errors="surrogateescape"), self._fileCrc)
         return super(Code, self)._alternate_line_processing(rawLine)
 
 
@@ -577,7 +577,7 @@ class Code( _searchMixin, NBNC ):
 
         # Take a CRC value from the line with whitespace reduced
         self.counts['nbncCRC'][self._activeBlock] = zlib.adler32(
-                ' '.join(line.split()), self.counts['nbncCRC'][self._activeBlock])
+                bytearray(' '.join(line.split()), 'utf8', errors="surrogateescape"), self.counts['nbncCRC'][self._activeBlock])
 
         # Capture some additional per-line metrics
         self.counts['Semicolons'][self._activeBlock] += strippedLine.count(';')

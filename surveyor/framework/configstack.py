@@ -29,7 +29,7 @@ def config_items_for_file(configEntrys, fileName):
     # so we check against every config
     # If there are custom RE config filters, we include them no matter what,
     # since we can't just match them against the file extension
-    for configFilter in configEntrys.keys():
+    for configFilter in list(configEntrys.keys()):
         if fileext.file_ext_match(fileName, configFilter):
             for config in configEntrys[configFilter]:
                 neededConfigs.append(config)

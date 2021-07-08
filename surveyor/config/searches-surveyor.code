@@ -1,3 +1,6 @@
+# Project: XXX
+# Date: 03-20-2018
+
 #=============================================================================
 #
 #   Code Surveyor configuration file for searching
@@ -43,7 +46,7 @@
 #=============================================================================
 # Constants can be defined
 # For example, _CODE_FILES_ defines a set of file extensions for use in config lines
-CONSTANT:_CODE_FILES_:*.cpp;*.java;*.cs;*.js;*.ts;*.coffee;*.c;*.cxx;*.sql;*.rdl;*.wsdl;*.cmd;*.aspx;*.asmx;*.asax;*.rb;*.rjs;*.idl;*.vb;*.frm;*.ctl;*.cls;*.erl;*.m;*.mm;*.cshtml;*.php;*.jsp;*.jspx;*.r;*.py;*.swift;*.go;*.as
+CONSTANT:_CODE_FILES_:*.cpp;*.java;*.cs;*.js;*.ts;*.coffee;*.c;*.cxx;*.sql;*.rdl;*.wsdl;*.cmd;*.aspx;*.asmx;*.asax;*.rb;*.rjs;*.idl;*.vb;*.frm;*.ctl;*.cls;*.erl;*.m;*.mm;*.cshtml;*.php;*.jsp;*.jspx;*.r;*.py;*.swift;*.go;*.as;*.clj
 
 CONSTANT:_SEARCH_OUT_: OUT:Searches.csv
 CONSTANT:_LITERAL_OUT_: OUT:Literals.csv
@@ -75,6 +78,19 @@ search_end
 
 search  Code  search.*  _CODE_FILES_  Interfaces	_LITERAL_OUT_
     (?:public|private|protected)\s+interface\s+([A-Za-z_0-9 :<>,]+)
+search_end
+
+# Secrets - see https://github.com/awslabs/git-secrets where I got these
+# patterns
+
+search Code   search.*  _CODE_FILES_  Secrets    _LITERAL_OUT_
+   POSITIVE__(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}
+   POSITIVE__(?:AWS|aws|Aws)_*(SECRET|secret|Secret)_*(ACCESS|access|Access)_*(KEY|key|Key)
+   POSITIVE__["'](?:AWS|aws|Aws)(ACCOUNT|account|Account)_*(ID|id|Id)
+   POSITIVE__private_key
+   POSITIVE__(?:API|api)_*key
+   NEGATIVE__AKIAIOSFODNN7EXAMPLE
+   NEGATIVE__wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 search_end
 
 # Find exceptions - added raise/expect for Ruby for Hanoi
@@ -111,7 +127,9 @@ search_end
 #  The Search csmodule does not attempt any code parsing, but can provide
 #  postive-negative searches, and multi-line searches
 
+
 # Find Copyright notices
+# for target to filter out those copyrights if you care.
 search  Search  *  _CODE_FILES_  Copyright  _SEARCH_OUT_
     POSITIVE__copyright
     POSITIVE__\s+ tm \s+
@@ -125,3 +143,4 @@ search  Search  *   _CODE_FILES_   Authentication  _SEARCH_OUT_
     user.*password
     connection
 search_end
+

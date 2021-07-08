@@ -113,7 +113,7 @@ class Document( basemodule._BaseModule ):
 
             return True
 
-        except Exception, e:
+        except Exception as e:
             trace.traceback()
             raise utils.FileMeasureError(
                     "Problem processing file {0} with module: {1}\n\t{1}".format(

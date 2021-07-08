@@ -36,8 +36,8 @@ IGNORE_SIZE_DEFAULT = 5000000
 MAX_WORKERS = 1024
 MAX_PATH_DEPTH = 128
 
-# Used with the -a option
-MeasureAll = [("MeasureAll", 'measure NBNC file.* *')]
+# Used with the -a option (skips binary files)
+MeasureAll = [("MeasureAll", 'measure NBNC file.* * OPT:IGNORE_BINARY')]
 
 # Used with the -ad option
 MeasureCode = [("MeasureCode", 'measure Code * * OPT:MEASURE_EMPTIES')]
@@ -48,7 +48,7 @@ ScanAllCodeFilesToSkip = ['.*']
 class SurveyorCmdLineArgs( object ):
     '''
     With Python V2.7, Surveyor's command line processing needs could be met
-    with an argsparse implementaiton. Some day...
+    with an argsparse implementation. Some day...
     '''
 
     def __init__(self, cmdArgs, surveyorApp):
@@ -128,7 +128,7 @@ class SurveyorCmdLineArgs( object ):
                     dupeParam = self._get_next_param(optional=True)
                     try:
                         dupeParam = int(dupeParam)
-                    except Exception, e:
+                    except Exception as e:
                         pass
                     self._app._dupeThreshold = dupeParam
 
@@ -164,7 +164,7 @@ class SurveyorCmdLineArgs( object ):
 
                 # Other options
                 elif fc in CMDARG_NUM_WORKERS:
-                    self._app._jobOpt.numWorkers = self._get_next_int(validRange=xrange(1,MAX_WORKERS))
+                    self._app._jobOpt.numWorkers = self._get_next_int(validRange=range(1,MAX_WORKERS))
                 elif fc in CMDARG_RECURSION:
                     self._app._jobOpt.recursive = False
                 elif fc in CMDARG_BREAK_ERROR:
@@ -185,7 +185,7 @@ class SurveyorCmdLineArgs( object ):
                 self.configCustom = CONFIG_FILE_DEFAULT_NAME
 
 
-        except Args.ArgsFinishedException, e:
+        except Args.ArgsFinishedException as e:
             raise utils.InputException(STR_ErrorParsingEnd.format(str(e)))
         else:
             trace.config(4, vars(self._app))
@@ -307,7 +307,7 @@ class SurveyorCmdLineArgs( object ):
                         moduleFile = __import__(fileName)
                         module = getattr(moduleFile, modName)
                         moduleClass = getattr(module, className)
-                        optionList = moduleClass._cs_config_options().items()
+                        optionList = list(moduleClass._cs_config_options().items())
                         if optionList:
                             helpStr += STR_HelpText_Config_OptionModName.format(modName)
                             optionList.sort()
@@ -372,6 +372,8 @@ class SurveyorCmdLineArgs( object ):
             skipOpt = self.args.get_current()[2].lower()
             if skipOpt in CMDARG_SKIP_DIR:
                 self._app._jobOpt.skipFolders.extend(self._get_next_param().split(CMDLINE_SEPARATOR))
+            elif skipOpt in CMDARG_SKIP_EMPTY:
+                self._app._jobOpt.ignoreEmptyDirs = True
             elif skipOpt in CMDARG_SKIP_FILE:
                 self._app._jobOpt.skipFiles.extend(self._get_next_param().split(CMDLINE_SEPARATOR))
             elif skipOpt in CMDARG_SKIP_SIZE:
@@ -427,7 +429,7 @@ class SurveyorCmdLineArgs( object ):
         if allOpts:
             self._metaDataOptions['DIRS'] = 8
         elif fc in CMDARG_METADATA_MAXDEPTH:
-            self._metaDataOptions['DIRS'] = self._get_next_int(validRange=xrange(0, MAX_PATH_DEPTH))
+            self._metaDataOptions['DIRS'] = self._get_next_int(validRange=range(0, MAX_PATH_DEPTH))
 
 
     def _parse_debug_options(self):
