@@ -5,4 +5,7 @@ working with you on a project and we would like you to use anything in this
 repository, you will receive specific instructions from the project
 Engagement Manager on how to use the tool and deliver results.
 
-Note this requires a recent version of Python 2.x not Python 3.
+Requirements:
+- Python 3
+- Libmagic library (libmagic package in Debian/Ubuntu, file-libs for Fedora/RHEL)
+- Python-magic
