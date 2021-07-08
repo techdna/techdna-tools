@@ -6,6 +6,6 @@ repository, you will receive specific instructions from the project
 Engagement Manager on how to use the tool and deliver results.
 
 Requirements:
-- Python 3
+- Python 3 -- tested regularly against 3.9.x
 - Libmagic library (libmagic package in Debian/Ubuntu, file-libs for Fedora/RHEL)
 - Python-magic
